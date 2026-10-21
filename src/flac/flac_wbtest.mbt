@@ -301,6 +301,62 @@ fn write_subframe(
 }
 
 ///|
+/// Emit a fixed-predictor subframe whose residual uses `partition_order`
+/// Rice partitions and, for the first partition, the escape code.
+fn write_fixed_partitioned(
+  writer : BitWriter,
+  samples : Array[Int32],
+  bps : Int32,
+  order : Int32,
+  partition_order : Int32,
+  escape_first? : Bool = false,
+) -> Unit {
+  writer.write_bit(0)
+  writer.write_bits(8 + order, 6)
+  writer.write_bit(0)
+  for index = 0; index < order; index = index + 1 {
+    writer.write_signed(samples[index], bps)
+  }
+  let residual = fixed_residuals(samples, order)
+  let block_size = samples.length()
+  writer.write_bits(0, 2)
+  writer.write_bits(partition_order, 4)
+  let partitions = 1 << partition_order
+  let part_size = block_size >> partition_order
+  let mut cursor = 0
+  for partition = 0; partition < partitions; partition = partition + 1 {
+    let count = if partition == 0 {
+      part_size - order
+    } else {
+      part_size
+    }
+    let escaped = escape_first && partition == 0
+    if escaped {
+      writer.write_bits(0x0F, 4)
+      writer.write_bits(16, 5)
+      for _index = 0; _index < count; _index = _index + 1 {
+        writer.write_signed(residual[cursor], 16)
+        cursor = cursor + 1
+      }
+    } else {
+      let parameter = 6
+      writer.write_bits(parameter, 4)
+      for _index = 0; _index < count; _index = _index + 1 {
+        let value = residual[cursor]
+        let zigzag = if value < 0 {
+          ((-value) << 1) - 1
+        } else {
+          value << 1
+        }
+        writer.write_unary(zigzag >> parameter)
+        writer.write_bits(zigzag & ((1 << parameter) - 1), parameter)
+        cursor = cursor + 1
+      }
+    }
+  }
+}
+
+///|
 /// Emit a complete frame whose subframes follow `kinds`.
 fn write_frame(
   writer : BitWriter,
@@ -778,4 +834,119 @@ test "metadata comments are parsed" {
   assert_eq(info.meta("ARTIST"), Some("Sakuraqwq1"))
   assert_eq(info.meta("ALBUM"), None)
   assert_eq(info.blocks.length(), 2)
+}
+
+///|
+test "partitioned rice residuals with an escape partition" {
+  let samples = pseudo(71, 16, 400)
+  for partition_order = 0; partition_order <= 2; partition_order = partition_order + 1 {
+    let writer = BitWriter::new()
+    writer.write_raw(ascii_bytes("fLaC"))
+    write_stream_info(writer, 8000, 1, 16, 16L, 16)
+    let bytes = writer.to_bytes()
+    let patched : Array[Byte] = []
+    for index = 0; index < bytes.length(); index = index + 1 {
+      patched.push(
+        if index == 4 {
+          (bytes.at(index).to_int() | 0x80).to_byte()
+        } else {
+          bytes.at(index)
+        },
+      )
+    }
+    let out = BitWriter::new()
+    out.write_raw(Bytes::from_array(patched[:]))
+    let frame = BitWriter::new()
+    let start = frame.byte_position()
+    frame.write_bits(0x3FFE, 14)
+    frame.write_bit(0)
+    frame.write_bit(0)
+    frame.write_bits(7, 4)
+    frame.write_bits(0, 4)
+    frame.write_bits(0, 4)
+    frame.write_bits(0, 3)
+    frame.write_bit(0)
+    write_utf8_number(frame, 0L)
+    frame.write_bits(15, 16)
+    frame.align()
+    let header_end = frame.byte_position()
+    let header_crc = crc8(frame.to_bytes(), start, header_end)
+    frame.write_bits(header_crc, 8)
+    write_fixed_partitioned(frame, samples, 16, 2, partition_order, escape_first=true)
+    frame.align()
+    let end = frame.byte_position()
+    let frame_crc = crc16(frame.to_bytes(), start, end)
+    frame.write_bits((frame_crc >> 8) & 0xFF, 8)
+    frame.write_bits(frame_crc & 0xFF, 8)
+    out.write_raw(frame.to_bytes())
+    let (audio, message) = decode_or_message(out.to_bytes())
+    assert_eq(message, "ok")
+    assert_eq(audio.frames(), 16)
+    for index = 0; index < 16; index = index + 1 {
+      let expected = samples[index].to_double() / 32768.0
+      assert_true((audio.data[index] - expected).abs() < 1.0e-9)
+    }
+  }
+}
+
+///|
+test "12 and 20 bit streams normalise correctly" {
+  for bps = 12; bps <= 20; bps = bps + 8 {
+    let range = (1 << (bps - 1)) - 1
+    let samples = pseudo(77 + bps, 16, range)
+    let stream = make_flac(44100, 1, bps, 16L, [[samples]], [[SubKind::Verbatim]])
+    let (audio, message) = decode_or_message(stream)
+    assert_eq(message, "ok")
+    let scale = 1.0 / (1 << (bps - 1)).to_double()
+    for index = 0; index < 16; index = index + 1 {
+      assert_true((audio.data[index] - samples[index].to_double() * scale).abs() < 1.0e-12)
+    }
+  }
+}
+
+///|
+test "variable blocking strategy is accepted" {
+  let samples = pseudo(83, 12, 300)
+  let writer = BitWriter::new()
+  writer.write_raw(ascii_bytes("fLaC"))
+  write_stream_info(writer, 8000, 1, 16, 12L, 12)
+  let bytes = writer.to_bytes()
+  let patched : Array[Byte] = []
+  for index = 0; index < bytes.length(); index = index + 1 {
+    patched.push(
+      if index == 4 {
+        (bytes.at(index).to_int() | 0x80).to_byte()
+      } else {
+        bytes.at(index)
+      },
+    )
+  }
+  let out = BitWriter::new()
+  out.write_raw(Bytes::from_array(patched[:]))
+  let frame = BitWriter::new()
+  let start = frame.byte_position()
+  frame.write_bits(0x3FFE, 14)
+  frame.write_bit(0)
+  frame.write_bit(1)
+  frame.write_bits(7, 4)
+  frame.write_bits(0, 4)
+  frame.write_bits(0, 4)
+  frame.write_bits(0, 3)
+  frame.write_bit(0)
+  write_utf8_number(frame, 0L)
+  frame.write_bits(11, 16)
+  frame.align()
+  let header_end = frame.byte_position()
+  let header_crc = crc8(frame.to_bytes(), start, header_end)
+  frame.write_bits(header_crc, 8)
+  write_subframe(frame, samples, 16, SubKind::Verbatim)
+  frame.align()
+  let end = frame.byte_position()
+  let frame_crc = crc16(frame.to_bytes(), start, end)
+  frame.write_bits((frame_crc >> 8) & 0xFF, 8)
+  frame.write_bits(frame_crc & 0xFF, 8)
+  out.write_raw(frame.to_bytes())
+  let (audio, message) = decode_or_message(out.to_bytes())
+  assert_eq(message, "ok")
+  assert_eq(audio.frames(), 12)
 }
