@@ -1,0 +1,5 @@
+import {
+  "Sakuraqwq1/moonaudio/src/audio" @audio,
+  "Sakuraqwq1/moonaudio/src/flac" @flac,
+  "Sakuraqwq1/moonaudio/src/wav" @wav,
+}
