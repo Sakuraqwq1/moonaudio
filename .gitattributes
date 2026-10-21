@@ -1,0 +1,10 @@
+# Normalise line endings so generated interfaces stay byte-identical across
+# platforms. `moon info` always writes LF, so a CRLF checkout (the GitHub
+# windows-latest default, core.autocrlf=true) makes every pkg.generated.mbti
+# look dirty and breaks the interface-freshness check.
+* text=auto eol=lf
+
+# Generated MoonBit interfaces: never rewrite them, only regenerate.
+*.mbti text eol=lf
+*.mbt  text eol=lf
+*.pkg  text eol=lf
