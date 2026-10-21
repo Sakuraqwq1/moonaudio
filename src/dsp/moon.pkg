@@ -1,0 +1,6 @@
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+  "moonbitlang/core/math",
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/encoding/utf8",
+}
