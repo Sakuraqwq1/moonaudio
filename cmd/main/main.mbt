@@ -16,8 +16,15 @@ fn usage() -> Unit {
     "  moonaudio info <base64>                 container, format and metadata summary",
   )
   println(
-    "  moonaudio stats <base64>                peak/RMS/duration for decoded audio",
+    "  moonaudio stats <base64>                peak/RMS/crest/DC/zero crossings",
   )
+  println(
+    "  moonaudio spectrum <base64> [options]   dominant frequency and spectral peak",
+  )
+  println("      --fft <n>           FFT size, power of two (default: 1024)")
+  println("  moonaudio spectrogram <base64> [options]")
+  println("      --fft <n> --hop <n> --window <name> --svg")
+  println("      prints CSV (default) or a grayscale SVG heat map")
   println(
     "  moonaudio convert <base64> [options]    decode, optionally resample, re-encode",
   )
@@ -37,6 +44,8 @@ fn usage() -> Unit {
     "core has no portable filesystem API. Decode the output to get a file:",
   )
   println("  moon run cmd/main -- tone --freq 440 > tone.b64")
+  println("  export AUDIO_B64=$(cat tone.b64)")
+  println("  moon run cmd/main -- stats @AUDIO_B64")
 }
 
 ///|
@@ -50,38 +59,46 @@ fn main {
   }
   let command = args[0]
   let rest = if args.length() > 1 { args[1:].to_owned() } else { [] }
-  if command == "version" || command == "--version" || command == "-V" {
-    println("moonaudio \{@moonaudio.version()}")
-  } else if command == "help" || command == "--help" || command == "-h" {
-    usage()
-  } else if command == "demo" {
-    run_demo()
-  } else if command == "info" {
-    if rest.length() == 0 {
-      println("error: `info` needs a base64 payload")
+  match command {
+    "version" | "--version" | "-V" =>
+      println("moonaudio \{@moonaudio.version()}")
+    "help" | "--help" | "-h" => usage()
+    "demo" => run_demo()
+    "info" =>
+      if rest.length() == 0 {
+        println("error: `info` needs a base64 payload")
+      } else {
+        run_info(rest[0])
+      }
+    "stats" =>
+      if rest.length() == 0 {
+        println("error: `stats` needs a base64 payload")
+      } else {
+        run_stats(rest[0])
+      }
+    "spectrum" =>
+      if rest.length() == 0 {
+        println("error: `spectrum` needs a base64 payload")
+      } else {
+        run_spectrum(rest[0], rest[1:].to_owned())
+      }
+    "spectrogram" =>
+      if rest.length() == 0 {
+        println("error: `spectrogram` needs a base64 payload")
+      } else {
+        run_spectrogram(rest[0], rest[1:].to_owned())
+      }
+    "convert" =>
+      if rest.length() == 0 {
+        println("error: `convert` needs a base64 payload")
+      } else {
+        run_convert(rest[0], rest[1:].to_owned())
+      }
+    "tone" => run_tone(rest)
+    _ => {
+      println("error: unknown command \"\{command}\"")
       usage()
-    } else {
-      run_info(rest[0])
     }
-  } else if command == "stats" {
-    if rest.length() == 0 {
-      println("error: `stats` needs a base64 payload")
-      usage()
-    } else {
-      run_stats(rest[0])
-    }
-  } else if command == "convert" {
-    if rest.length() == 0 {
-      println("error: `convert` needs a base64 payload")
-      usage()
-    } else {
-      run_convert(rest[0], rest[1:].to_owned())
-    }
-  } else if command == "tone" {
-    run_tone(rest)
-  } else {
-    println("error: unknown command \"\{command}\"")
-    usage()
   }
 }
 
@@ -113,6 +130,17 @@ fn option(args : Array[String], name : String, fallback : String) -> String {
     index = index + 1
   }
   fallback
+}
+
+///|
+/// `true` when the flag `--name` appears in `args`.
+fn flag(args : Array[String], name : String) -> Bool {
+  for argument in args {
+    if argument == name {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -150,6 +178,22 @@ fn decode_payload(payload : String) -> Bytes? {
 }
 
 ///|
+/// Load a payload and decode it as audio, reporting any error.
+fn load_audio(payload : String) -> @audio.AudioBuffer? {
+  let bytes = match decode_payload(payload) {
+    Some(bytes) => bytes
+    None => return None
+  }
+  let audio = @moonaudio.decode(bytes) catch {
+    (error : @audio.AudioError) => {
+      report_error(error)
+      return None
+    }
+  }
+  Some(audio)
+}
+
+///|
 /// `info` command: container and metadata summary.
 fn run_info(payload : String) -> Unit {
   let bytes = match decode_payload(payload) {
@@ -173,40 +217,66 @@ fn run_info(payload : String) -> Unit {
 ///|
 /// `stats` command: decode and print measured levels.
 fn run_stats(payload : String) -> Unit {
-  let bytes = match decode_payload(payload) {
-    Some(bytes) => bytes
+  let audio = match load_audio(payload) {
+    Some(audio) => audio
     None => return
   }
-  let audio = @moonaudio.decode(bytes) catch {
+  println(@dsp.analyse(audio).to_lines())
+}
+
+///|
+/// `spectrum` command: dominant frequency of the loudest FFT frame.
+fn run_spectrum(payload : String, options : Array[String]) -> Unit {
+  let audio = match load_audio(payload) {
+    Some(audio) => audio
+    None => return
+  }
+  let fft_size = int_option(options, "--fft", 1024)
+  let peak = dominant_frequency(audio, fft_size)
+  println("fft size:  \{fft_size}")
+  println("dominant:  \{format_double(peak)} Hz")
+  println("expected:  \{format_double(440.0)} Hz for the CLI tone command")
+}
+
+///|
+/// `spectrogram` command: CSV or SVG rendering.
+fn run_spectrogram(payload : String, options : Array[String]) -> Unit {
+  let audio = match load_audio(payload) {
+    Some(audio) => audio
+    None => return
+  }
+  let fft_size = int_option(options, "--fft", 1024)
+  let hop = int_option(options, "--hop", fft_size / 4)
+  let window_name = option(options, "--window", "hann")
+  let window = match window_name {
+    "rect" | "rectangular" => @dsp.WindowKind::Rectangular
+    "hamming" => @dsp.WindowKind::Hamming
+    "blackman" => @dsp.WindowKind::Blackman
+    "blackman-harris" => @dsp.WindowKind::BlackmanHarris
+    "kaiser" => @dsp.WindowKind::Kaiser
+    _ => @dsp.WindowKind::Hann
+  }
+  let spectrogram = @dsp.spectrogram(audio, fft_size~, hop~, window~) catch {
     (error : @audio.AudioError) => {
       report_error(error)
       return
     }
   }
-  println("sample rate: \{audio.sample_rate} Hz")
-  println("channels:    \{audio.channels}")
-  println("frames:      \{audio.frames()}")
-  println("duration:    \{format_seconds(audio.duration_seconds())}")
-  println("peak:        \{format_dbfs(audio.peak_dbfs())}")
-  println("rms:         \{format_dbfs(audio.rms_dbfs())}")
+  if flag(options, "--svg") {
+    println(spectrogram.to_svg())
+  } else {
+    println(spectrogram.to_csv())
+  }
 }
 
 ///|
 /// `convert` command: decode, resample, remix, re-encode.
 fn run_convert(payload : String, options : Array[String]) -> Unit {
-  let bytes = match decode_payload(payload) {
-    Some(bytes) => bytes
+  let audio = match load_audio(payload) {
+    Some(audio) => audio
     None => return
   }
-  let audio = @moonaudio.decode(bytes) catch {
-    (error : @audio.AudioError) => {
-      report_error(error)
-      return
-    }
-  }
-  let rate = @string.parse_int(option(options, "--rate", "0")) catch {
-    (_ : Error) => 0
-  }
+  let rate = int_option(options, "--rate", 0)
   let target = if rate > 0 { rate } else { audio.sample_rate }
   let resampled = if target == audio.sample_rate {
     audio
@@ -218,9 +288,7 @@ fn run_convert(payload : String, options : Array[String]) -> Unit {
       }
     }
   }
-  let channels = @string.parse_int(option(options, "--channels", "0")) catch {
-    (_ : Error) => 0
-  }
+  let channels = int_option(options, "--channels", 0)
   let mixed = if channels > 0 && channels != resampled.channels {
     resampled.remix(channels) catch {
       (error : @audio.AudioError) => {
@@ -269,13 +337,9 @@ fn run_convert(payload : String, options : Array[String]) -> Unit {
 ///|
 /// `tone` command: synthesise a sine wave and print it as a WAV file.
 fn run_tone(options : Array[String]) -> Unit {
-  let frequency = parse_double_option(options, "--freq", 440.0)
-  let rate = @string.parse_int(option(options, "--rate", "44100")) catch {
-    (_ : Error) => 44100
-  }
-  let milliseconds = @string.parse_int(option(options, "--ms", "500")) catch {
-    (_ : Error) => 500
-  }
+  let frequency = double_option(options, "--freq", 440.0)
+  let rate = int_option(options, "--rate", 44100)
+  let milliseconds = int_option(options, "--ms", 500)
   let format = @audio.SampleFormat::parse(option(options, "--format", "s16")) catch {
     (error : @audio.AudioError) => {
       report_error(error)
@@ -283,7 +347,7 @@ fn run_tone(options : Array[String]) -> Unit {
     }
   }
   let frames = if milliseconds > 0 { rate * milliseconds / 1000 } else { 0 }
-  let audio = sine(frequency, rate, frames, 0.8) catch {
+  let audio = @dsp.tone(frequency, rate, frames, amplitude=0.8) catch {
     (error : @audio.AudioError) => {
       report_error(error)
       return
@@ -299,24 +363,39 @@ fn run_tone(options : Array[String]) -> Unit {
 }
 
 ///|
-/// Deterministic sine oscillator used by `tone` and `demo`.
-fn sine(
-  frequency : Double,
-  sample_rate : Int32,
-  frames : Int32,
-  amplitude : Double,
-) -> @audio.AudioBuffer raise @audio.AudioError {
-  let buffer = @audio.AudioBuffer::silence(sample_rate, 1, frames)
-  let step = 2.0 * @math.PI * frequency / sample_rate.to_double()
-  for frame = 0; frame < frames; frame = frame + 1 {
-    buffer.data[frame] = amplitude * @math.sin(step * frame.to_double())
+/// Frequency of the strongest FFT bin of the whole buffer.
+fn dominant_frequency(audio : @audio.AudioBuffer, fft_size : Int32) -> Double {
+  let size = if fft_size < 2 { 2 } else { fft_size }
+  let samples = audio.data
+  let count = if samples.length() < size { samples.length() } else { size }
+  let slice : Array[Double] = Array::make(size, 0.0)
+  for index = 0; index < count; index = index + 1 {
+    slice[index] = samples[index]
   }
-  buffer
+  let spectrum = @dsp.real_fft(slice)
+  let magnitudes = @dsp.magnitude(spectrum, n=size)
+  let mut best_index = 0
+  let mut best = 0.0
+  for index = 0; index < magnitudes.length(); index = index + 1 {
+    if magnitudes[index] > best {
+      best = magnitudes[index]
+      best_index = index
+    }
+  }
+  best_index.to_double() * audio.sample_rate.to_double() / size.to_double()
 }
 
 ///|
-/// Parse a floating point command line option.
-fn parse_double_option(
+/// Integer command line option.
+fn int_option(args : Array[String], name : String, fallback : Int32) -> Int32 {
+  @string.parse_int(option(args, name, "")) catch {
+    (_ : Error) => fallback
+  }
+}
+
+///|
+/// Floating point command line option.
+fn double_option(
   args : Array[String],
   name : String,
   fallback : Double,
@@ -332,13 +411,14 @@ fn parse_double_option(
 }
 
 ///|
-/// Human readable seconds with millisecond precision.
-fn format_seconds(seconds : Double) -> String {
-  let total_ms = (seconds * 1000.0).round().to_int()
-  let minutes = total_ms / 60000
-  let secs = total_ms % 60000 / 1000
-  let millis = total_ms % 1000
-  "\{minutes}m \{pad3(secs)}.\{pad3(millis)}s"
+/// Three decimal places rendering of a level.
+fn format_double(value : Double) -> String {
+  let scaled = (value * 1000.0).round().to_int()
+  let sign = if scaled < 0 { "-" } else { "" }
+  let magnitude = if scaled < 0 { -scaled } else { scaled }
+  let whole = magnitude / 1000
+  let fraction = magnitude % 1000
+  "\{sign}\{whole}.\{pad3(fraction)}"
 }
 
 ///|
@@ -351,17 +431,6 @@ fn pad3(value : Int32) -> String {
   } else {
     value.to_string()
   }
-}
-
-///|
-/// Three decimal places rendering of a level.
-fn format_double(value : Double) -> String {
-  let scaled = (value * 1000.0).round().to_int()
-  let sign = if scaled < 0 { "-" } else { "" }
-  let magnitude = if scaled < 0 { -scaled } else { scaled }
-  let whole = magnitude / 1000
-  let fraction = magnitude % 1000
-  "\{sign}\{whole}.\{pad3(fraction)}"
 }
 
 ///|
@@ -383,7 +452,7 @@ fn run_demo() -> Unit {
   println("# moonaudio demo")
   println("")
   println("- module version: `\{@moonaudio.version()}`")
-  let tone = sine(440.0, 44100, 44100, 0.8) catch {
+  let tone = @dsp.tone(440.0, 44100, 44100, amplitude=0.8) catch {
     (error : @audio.AudioError) => {
       report_error(error)
       return
@@ -416,8 +485,9 @@ fn run_demo() -> Unit {
       return
     }
   }
+  let stats = @dsp.analyse(decoded)
   println(
-    "- roundtrip: \{decoded.frames()} frames, peak \{format_dbfs(decoded.peak_dbfs())}, rms \{format_dbfs(decoded.rms_dbfs())}",
+    "- roundtrip: \{decoded.frames()} frames, peak \{format_dbfs(stats.peak_dbfs)}, rms \{format_dbfs(stats.rms_dbfs)}, crest \{format_double(stats.crest_factor)}",
   )
   let aiff_bytes = @aiff.encode(tone, format=@audio.I24) catch {
     (error : @audio.AudioError) => {
@@ -457,6 +527,35 @@ fn run_demo() -> Unit {
   }
   println(
     "- resampled 44.1 kHz -> 48 kHz: \{upsampled.frames()} frames, peak \{format_double(upsampled.peak())}",
+  )
+  let dominant = dominant_frequency(tone, 4096)
+  println(
+    "- FFT peak: \{format_double(dominant)} Hz for the 440 Hz tone (\{format_double(44100.0 / 4096.0)} Hz per bin)",
+  )
+  let spectrogram = @dsp.spectrogram(
+    tone,
+    fft_size=1024,
+    hop=256,
+    window=@dsp.WindowKind::Hann,
+  ) catch {
+    (error : @audio.AudioError) => {
+      report_error(error)
+      return
+    }
+  }
+  let (frames, bins) = spectrogram.size()
+  println(
+    "- spectrogram: \{frames} frames x \{bins} bins, bin width \{format_double(spectrogram.bin_hz())} Hz, frame 0 peak \{format_double(spectrogram.peak_frequency(0))} Hz",
+  )
+  let high_pass = @dsp.Biquad::new(@dsp.HighPass, 44100, 200.0) catch {
+    (error : @audio.AudioError) => {
+      report_error(error)
+      return
+    }
+  }
+  let filtered = high_pass.apply_buffer(tone)
+  println(
+    "- high pass 200 Hz: peak \{format_double(filtered.peak())}, rms \{format_double(filtered.rms())}",
   )
   println("")
   println(
