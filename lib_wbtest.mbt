@@ -3,6 +3,16 @@
 // Licensed under the Apache License, Version 2.0.
 
 ///|
+/// ASCII bytes for a text literal, built without extra imports.
+fn ascii(text : String) -> Bytes {
+  let out : Array[Byte] = []
+  for c in text {
+    out.push(c.to_int().to_byte())
+  }
+  Bytes::from_array(out[:])
+}
+
+///|
 /// A small signal used by every dispatch test.
 fn sample_audio() -> @audio.AudioBuffer {
   @audio.AudioBuffer::{
@@ -49,16 +59,16 @@ test "sniff recognises every container" {
   assert_true(is_container(sniff(wav_bytes), Container::Wav))
   assert_true(is_container(sniff(aiff_bytes), Container::Aiff))
   assert_true(is_container(sniff(au_bytes), Container::Au))
-  assert_true(is_container(sniff(@utf8.encode("fLaC")), Container::Flac))
+  assert_true(is_container(sniff(ascii("fLaC")), Container::Flac))
 }
 
 ///|
 test "sniff rejects non audio bytes" {
-  assert_true(is_unknown(sniff(@utf8.encode("hello world"))))
-  assert_true(is_unknown(sniff(@utf8.encode("RIFF"))))
-  assert_true(is_unknown(sniff(@utf8.encode("FORM"))))
+  assert_true(is_unknown(sniff(ascii("hello world"))))
+  assert_true(is_unknown(sniff(ascii("RIFF"))))
+  assert_true(is_unknown(sniff(ascii("FORM"))))
   // RIFF with a non-WAVE form type is not a WAV file.
-  assert_true(is_unknown(sniff(@utf8.encode("RIFFxxxxAVI "))))
+  assert_true(is_unknown(sniff(ascii("RIFFxxxxAVI "))))
 }
 
 ///|
@@ -111,7 +121,7 @@ test "describe summarises every container" {
 ///|
 test "unknown containers raise unsupported" {
   let mut kind = "ok"
-  let _ = decode(@utf8.encode("not audio data")) catch {
+  let _ = decode(ascii("not audio data")) catch {
     (error : @audio.AudioError) => {
       kind = error.kind()
       @audio.AudioBuffer::new(0, 1)
