@@ -14,7 +14,9 @@ fn main {
       return
     }
   }
-  println("built  : \{tone.sample_rate} Hz, \{tone.channels} ch, \{tone.frames()} frames")
+  println(
+    "built  : \{tone.sample_rate} Hz, \{tone.channels} ch, \{tone.frames()} frames",
+  )
   let encoded = @wav.encode(tone) catch {
     (error : @audio.AudioError) => {
       println("error: \{error.message()}")

@@ -135,7 +135,7 @@ pub fn decode_frame(
   bytes : Bytes,
   offset : Int32,
   info : FlacInfo,
-  verify_crc? : Bool = true,
+  verify_crc~ : Bool = true,
 ) -> (Array[Array[Int32]], FrameHeader, Int32) raise @audio.AudioError {
   let header = parse_frame_header(bytes, offset, info)
   let reader = BitReader::new(bytes, bit=header.payload_offset * 8)
@@ -278,8 +278,7 @@ fn decode_fixed(
       0 => 0
       1 => samples[index - 1]
       2 => 2 * samples[index - 1] - samples[index - 2]
-      3 =>
-        3 * samples[index - 1] - 3 * samples[index - 2] + samples[index - 3]
+      3 => 3 * samples[index - 1] - 3 * samples[index - 2] + samples[index - 3]
       4 =>
         4 * samples[index - 1] -
         6 * samples[index - 2] +
@@ -324,7 +323,8 @@ fn decode_lpc(
   for index = order; index < block_size; index = index + 1 {
     let mut sum = 0L
     for tap = 0; tap < order; tap = tap + 1 {
-      sum = sum + coefficients[tap].to_int64() * samples[index - 1 - tap].to_int64()
+      sum = sum +
+        coefficients[tap].to_int64() * samples[index - 1 - tap].to_int64()
     }
     let prediction = (sum >> shift).to_int()
     samples[index] = prediction + residual[index - order]
@@ -388,7 +388,10 @@ fn decode_residual(
 
 ///|
 /// Read one Rice code with parameter `parameter` (0..=30).
-fn read_rice(reader : BitReader, parameter : Int32) -> Int32 raise @audio.AudioError {
+fn read_rice(
+  reader : BitReader,
+  parameter : Int32,
+) -> Int32 raise @audio.AudioError {
   let quotient = reader.read_unary()
   let remainder = if parameter == 0 { 0 } else { reader.read_bits(parameter) }
   let value = (quotient << parameter) | remainder

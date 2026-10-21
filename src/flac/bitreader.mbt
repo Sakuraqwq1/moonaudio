@@ -18,8 +18,8 @@ pub(all) struct BitReader {
 ///|
 /// Create a reader positioned at `bit` (0 means the most significant bit of
 /// `data[0]`).
-pub fn BitReader::new(data : Bytes, bit? : Int32 = 0) -> BitReader {
-  BitReader::{ data, bit }
+pub fn BitReader::new(data : Bytes, bit~ : Int32 = 0) -> BitReader {
+  BitReader::{ data, bit, }
 }
 
 ///|
@@ -122,7 +122,7 @@ pub fn BitReader::read_signed64(
     return raw
   }
   let shift = 64 - count
-  (raw << shift) >> shift
+  raw << shift >> shift
 }
 
 ///|
@@ -132,7 +132,7 @@ pub fn BitReader::read_signed64(
 /// spinning for megabytes.
 pub fn BitReader::read_unary(
   self : BitReader,
-  limit? : Int32 = 1 << 20,
+  limit~ : Int32 = 1 << 20,
 ) -> Int32 raise @audio.AudioError {
   let mut count = 0
   while self.read_bit() == 0 {
@@ -181,7 +181,7 @@ pub fn BitReader::read_bytes(
   }
   let start = self.bit / 8
   self.bit = self.bit + count * 8
-  self.data.exact_view(start=start, end=start + count).to_owned()
+  self.data.exact_view(start~, end=start + count).to_owned()
 }
 
 ///|
@@ -189,7 +189,9 @@ pub fn BitReader::read_bytes(
 ///
 /// The encoding is UTF-8 with the 16 bit surrogate range allowed, so the value
 /// can exceed the Unicode limit; it is returned as `Int64`.
-pub fn BitReader::read_utf8_uint(self : BitReader) -> Int64 raise @audio.AudioError {
+pub fn BitReader::read_utf8_uint(
+  self : BitReader,
+) -> Int64 raise @audio.AudioError {
   let first = self.read_byte()
   if first < 0x80 {
     return first.to_int64()

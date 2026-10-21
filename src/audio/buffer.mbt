@@ -20,7 +20,7 @@ pub(all) struct AudioBuffer {
 ///|
 /// Create an empty buffer with `sample_rate` and `channels`.
 pub fn AudioBuffer::new(sample_rate : Int32, channels : Int32) -> AudioBuffer {
-  AudioBuffer::{ sample_rate, channels, data: [] }
+  AudioBuffer::{ sample_rate, channels, data: [], }
 }
 
 ///|
@@ -39,7 +39,11 @@ pub fn AudioBuffer::silence(
   if frames < 0 {
     raise OutOfRange("frame count must not be negative, got \{frames}")
   }
-  AudioBuffer::{ sample_rate, channels, data: Array::make(frames * channels, 0.0) }
+  AudioBuffer::{
+    sample_rate,
+    channels,
+    data: Array::make(frames * channels, 0.0),
+  }
 }
 
 ///|
@@ -165,7 +169,7 @@ pub fn AudioBuffer::from_channels(
       data[frame * count + channel] = source[frame]
     }
   }
-  AudioBuffer::{ sample_rate, channels: count, data }
+  AudioBuffer::{ sample_rate, channels: count, data, }
 }
 
 ///|
@@ -244,7 +248,7 @@ pub fn from_dbfs(decibels : Double) -> Double {
 /// Returns the applied linear gain; a silent buffer is left untouched.
 pub fn AudioBuffer::normalize(
   self : AudioBuffer,
-  target? : Double = 0.9,
+  target~ : Double = 0.9,
 ) -> Double {
   let goal = if target < 0.0 {
     0.0
@@ -308,7 +312,7 @@ pub fn AudioBuffer::slice(
   for index = 0; index < data.length(); index = index + 1 {
     data[index] = self.data[offset + index]
   }
-  AudioBuffer::{ sample_rate: self.sample_rate, channels: self.channels, data }
+  AudioBuffer::{ sample_rate: self.sample_rate, channels: self.channels, data, }
 }
 
 ///|
@@ -351,7 +355,7 @@ pub fn AudioBuffer::remix(
       }
     }
   }
-  AudioBuffer::{ sample_rate: self.sample_rate, channels, data }
+  AudioBuffer::{ sample_rate: self.sample_rate, channels, data, }
 }
 
 ///|

@@ -95,7 +95,7 @@ pub fn parse_info(bytes : Bytes) -> FlacInfo raise @audio.AudioError {
     if length < 0 || payload + length > bytes.length() {
       raise @audio.Truncated("metadata block payload of \{length} bytes")
     }
-    blocks.push(MetaBlock::{ kind, offset: payload, length, last })
+    blocks.push(MetaBlock::{ kind, offset: payload, length, last, })
     if kind == 0 {
       if length < 34 {
         raise @audio.Invalid("STREAMINFO block is \{length} bytes, need 34")
@@ -142,7 +142,10 @@ priv struct StreamInfo {
 
 ///|
 /// Decode the 34 byte `STREAMINFO` payload.
-fn parse_stream_info(bytes : Bytes, offset : Int32) -> StreamInfo raise @audio.AudioError {
+fn parse_stream_info(
+  bytes : Bytes,
+  offset : Int32,
+) -> StreamInfo raise @audio.AudioError {
   let min_block = @audio.read_u16be(bytes, offset)
   let max_block = @audio.read_u16be(bytes, offset + 2)
   let min_frame = @audio.read_u24be(bytes, offset + 4)
@@ -225,7 +228,9 @@ fn parse_vorbis_comment(
     if size < 0 || cursor + size > end {
       return
     }
-    let text = @utf8.decode_lossy(bytes.exact_view(start=cursor, end=cursor + size))
+    let text = @utf8.decode_lossy(
+      bytes.exact_view(start=cursor, end=cursor + size),
+    )
     cursor = cursor + size
     match text.find("=") {
       Some(position) => {

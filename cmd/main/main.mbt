@@ -5,25 +5,37 @@
 ///|
 /// Text printed when the CLI is invoked without a recognised command.
 fn usage() -> Unit {
-  println(
-    "moonaudio \{@moonaudio.version()} — pure MoonBit audio toolkit",
-  )
+  println("moonaudio \{@moonaudio.version()} — pure MoonBit audio toolkit")
   println("")
   println("usage:")
-  println("  moonaudio demo                          self check with a Markdown report")
+  println(
+    "  moonaudio demo                          self check with a Markdown report",
+  )
   println("  moonaudio version                       print the module version")
-  println("  moonaudio info <base64>                 container, format and metadata summary")
-  println("  moonaudio stats <base64>                peak/RMS/duration for decoded audio")
-  println("  moonaudio convert <base64> [options]    decode, optionally resample, re-encode")
+  println(
+    "  moonaudio info <base64>                 container, format and metadata summary",
+  )
+  println(
+    "  moonaudio stats <base64>                peak/RMS/duration for decoded audio",
+  )
+  println(
+    "  moonaudio convert <base64> [options]    decode, optionally resample, re-encode",
+  )
   println("      --rate <hz>         target sample rate (default: keep)")
   println("      --channels <n>      target channel count (default: keep)")
   println("      --format <name>     u8|s16|s24|s32|f32|f64 (default: s16)")
   println("      --container <name>  wav|aiff|au (default: wav)")
-  println("  moonaudio tone [options]                synthesise a sine wave as WAV")
+  println(
+    "  moonaudio tone [options]                synthesise a sine wave as WAV",
+  )
   println("      --freq <hz> --rate <hz> --ms <ms> --format <name>")
   println("")
-  println("Binary payloads travel as base64 on the command line, because MoonBit")
-  println("core has no portable filesystem API. Decode the output to get a file:")
+  println(
+    "Binary payloads travel as base64 on the command line, because MoonBit",
+  )
+  println(
+    "core has no portable filesystem API. Decode the output to get a file:",
+  )
   println("  moon run cmd/main -- tone --freq 440 > tone.b64")
 }
 
@@ -37,11 +49,7 @@ fn main {
     return
   }
   let command = args[0]
-  let rest = if args.length() > 1 {
-    args[1:].to_owned()
-  } else {
-    []
-  }
+  let rest = if args.length() > 1 { args[1:].to_owned() } else { [] }
   if command == "version" || command == "--version" || command == "-V" {
     println("moonaudio \{@moonaudio.version()}")
   } else if command == "help" || command == "--help" || command == "-h" {
@@ -274,11 +282,7 @@ fn run_tone(options : Array[String]) -> Unit {
       return
     }
   }
-  let frames = if milliseconds > 0 {
-    rate * milliseconds / 1000
-  } else {
-    0
-  }
+  let frames = if milliseconds > 0 { rate * milliseconds / 1000 } else { 0 }
   let audio = sine(frequency, rate, frames, 0.8) catch {
     (error : @audio.AudioError) => {
       report_error(error)
@@ -321,7 +325,9 @@ fn parse_double_option(
   if text.length() == 0 {
     fallback
   } else {
-    @string.parse_double(text) catch { (_ : Error) => fallback }
+    @string.parse_double(text) catch {
+      (_ : Error) => fallback
+    }
   }
 }
 

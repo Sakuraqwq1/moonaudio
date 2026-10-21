@@ -161,7 +161,11 @@ pub fn read_f64be(data : Bytes, offset : Int32) -> Double raise AudioError {
 
 ///|
 /// Read `length` bytes as an ASCII string.
-pub fn read_ascii(data : Bytes, offset : Int32, length : Int32) -> String raise AudioError {
+pub fn read_ascii(
+  data : Bytes,
+  offset : Int32,
+  length : Int32,
+) -> String raise AudioError {
   require_bytes(data, offset, length, "ascii")
   @utf8.decode_lossy(data.exact_view(start=offset, end=offset + length))
 }

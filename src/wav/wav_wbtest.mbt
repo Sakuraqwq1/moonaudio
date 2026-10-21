@@ -19,16 +19,17 @@ fn ascii(text : String) -> Bytes {
   buffer.write_string_utf8(text)
   buffer.to_bytes()
 }
+
 ///|
 /// Build a RIFF/WAVE file from raw `fmt ` and `data` payloads.
-fn craft(
-  fmt : Bytes,
-  data : Bytes,
-  big_endian? : Bool = false,
-) -> Bytes {
+fn craft(fmt : Bytes, data : Bytes, big_endian~ : Bool = false) -> Bytes {
   let buffer = @buffer.Buffer::Buffer(size_hint=64)
   buffer.write_string_utf8("RIFF")
-  put_u32(buffer, (4 + 8 + fmt.length() + 8 + data.length()).to_int64(), big_endian)
+  put_u32(
+    buffer,
+    (4 + 8 + fmt.length() + 8 + data.length()).to_int64(),
+    big_endian,
+  )
   buffer.write_string_utf8("WAVE")
   buffer.write_string_utf8("fmt ")
   put_u32(buffer, fmt.length().to_int64(), big_endian)
@@ -62,6 +63,7 @@ fn put_u16(buffer : @buffer.Buffer, value : Int32) -> Unit {
   buffer.write_byte((value & 0xFF).to_byte())
   buffer.write_byte(((value >> 8) & 0xFF).to_byte())
 }
+
 ///|
 /// Big endian 16 bit writer used by the RIFX fixture.
 fn put_u16_be(buffer : @buffer.Buffer, value : Int32) -> Unit {
@@ -254,10 +256,12 @@ test "mu-law wave is expanded" {
 /// Decode `bytes` and report the error kind, or `"ok"`.
 fn decode_error_kind(bytes : Bytes) -> String {
   let mut kind = "ok"
-  let _ = decode(bytes) catch { (error : @audio.AudioError) => {
-    kind = error.kind()
-    @audio.AudioBuffer::new(0, 1)
-  } }
+  let _ = decode(bytes) catch {
+    (error : @audio.AudioError) => {
+      kind = error.kind()
+      @audio.AudioBuffer::new(0, 1)
+    }
+  }
   kind
 }
 
@@ -265,23 +269,25 @@ fn decode_error_kind(bytes : Bytes) -> String {
 /// Parse `bytes` and report the error kind, or `"ok"`.
 fn info_error_kind(bytes : Bytes) -> String {
   let mut kind = "ok"
-  let _ = parse_info(bytes) catch { (error : @audio.AudioError) => {
-    kind = error.kind()
-    WavInfo::{
-      sample_rate: 0,
-      channels: 0,
-      frames: 0,
-      format: @audio.I16,
-      format_tag: 0,
-      bits_per_sample: 0,
-      valid_bits: 0,
-      channel_mask: 0L,
-      byte_rate: 0L,
-      extensible: false,
-      chunks: [],
-      metadata: [],
+  let _ = parse_info(bytes) catch {
+    (error : @audio.AudioError) => {
+      kind = error.kind()
+      WavInfo::{
+        sample_rate: 0,
+        channels: 0,
+        frames: 0,
+        format: @audio.I16,
+        format_tag: 0,
+        bits_per_sample: 0,
+        valid_bits: 0,
+        channel_mask: 0L,
+        byte_rate: 0L,
+        extensible: false,
+        chunks: [],
+        metadata: [],
+      }
     }
-  } }
+  }
   kind
 }
 

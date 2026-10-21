@@ -38,10 +38,12 @@ fn ramp_buffer() -> AudioBuffer {
 /// Return the kind of the error raised by parsing `name`, or `"ok"`.
 fn parse_error_kind(name : String) -> String {
   let mut result = "ok"
-  let _ = SampleFormat::parse(name) catch { (error : AudioError) => {
-    result = error.kind()
-    U8
-  } }
+  let _ = SampleFormat::parse(name) catch {
+    (error : AudioError) => {
+      result = error.kind()
+      U8
+    }
+  }
   result
 }
 
@@ -49,10 +51,12 @@ fn parse_error_kind(name : String) -> String {
 /// Return the kind of the error raised by a short read, or `"ok"`.
 fn short_read_kind() -> String {
   let mut result = "ok"
-  let _ = read_u16le(Bytes::make(0, 0), 0) catch { (error : AudioError) => {
-    result = error.kind()
-    0
-  } }
+  let _ = read_u16le(Bytes::make(0, 0), 0) catch {
+    (error : AudioError) => {
+      result = error.kind()
+      0
+    }
+  }
   result
 }
 
@@ -60,10 +64,12 @@ fn short_read_kind() -> String {
 /// Return the kind of the error raised by an out of range ASCII read.
 fn ascii_read_kind() -> String {
   let mut result = "ok"
-  let _ = read_ascii(ascii_bytes("RIFF"), 0, 9) catch { (error : AudioError) => {
-    result = error.kind()
-    ""
-  } }
+  let _ = read_ascii(ascii_bytes("RIFF"), 0, 9) catch {
+    (error : AudioError) => {
+      result = error.kind()
+      ""
+    }
+  }
   result
 }
 
@@ -121,7 +127,9 @@ test "slice and append" {
   let head = buffer.slice(0, 2)
   assert_eq(head.frames(), 2)
   let tail = buffer.slice(2, 4)
-  head.append(tail) catch { (_ : AudioError) => panic() }
+  head.append(tail) catch {
+    (_ : AudioError) => panic()
+  }
   assert_eq(head.frames(), 4)
   assert_eq(head.sample(3, 1), -1.0)
   assert_eq(buffer.slice(3, 99).frames(), 1)
@@ -152,9 +160,7 @@ test "sample format metadata" {
   assert_true(!I16.is_float())
   assert_eq(I16.max_code(), 32767.0)
   assert_eq(I16.to_name(), "s16")
-  let parsed = SampleFormat::parse("s24") catch {
-    (_ : AudioError) => panic()
-  }
+  let parsed = SampleFormat::parse("s24") catch { (_ : AudioError) => panic() }
   assert_eq(parsed.to_name(), "s24")
   assert_eq(parse_error_kind("nope"), "invalid")
   assert_eq(parse_error_kind("s16"), "ok")

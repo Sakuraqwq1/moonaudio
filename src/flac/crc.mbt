@@ -49,7 +49,7 @@ pub(all) struct Crc16 {
 ///|
 /// A fresh CRC-16 accumulator (initial value 0).
 pub fn Crc16::new() -> Crc16 {
-  Crc16::{ value: 0 }
+  Crc16::{ value: 0, }
 }
 
 ///|

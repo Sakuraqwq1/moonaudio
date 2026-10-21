@@ -7,7 +7,7 @@
 pub fn parse(bytes : Bytes) -> FlacFile raise @audio.AudioError {
   let info = parse_info(bytes)
   let audio = decode_with_info(bytes, info)
-  FlacFile::{ info, audio }
+  FlacFile::{ info, audio, }
 }
 
 ///|
@@ -26,7 +26,7 @@ pub fn decode(bytes : Bytes) -> @audio.AudioBuffer raise @audio.AudioError {
 pub fn decode_with_info(
   bytes : Bytes,
   info : FlacInfo,
-  verify_crc? : Bool = true,
+  verify_crc~ : Bool = true,
 ) -> @audio.AudioBuffer raise @audio.AudioError {
   if info.channels <= 0 {
     raise @audio.Invalid("stream declares \{info.channels} channels")

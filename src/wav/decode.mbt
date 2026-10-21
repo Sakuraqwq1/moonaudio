@@ -122,7 +122,7 @@ pub fn parse(bytes : Bytes) -> WavFile raise @audio.AudioError {
     big_endian,
     info.frames,
   )
-  WavFile::{ info, audio }
+  WavFile::{ info, audio, }
 }
 
 ///|
@@ -160,7 +160,7 @@ pub fn parse_info(bytes : Bytes) -> WavInfo raise @audio.AudioError {
       break
     }
     let usable = if size > available { available } else { size }
-    chunks.push(ChunkRef::{ id, offset: payload, size: usable })
+    chunks.push(ChunkRef::{ id, offset: payload, size: usable, })
     if id == "fmt " {
       fmt = Some(parse_fmt(bytes, payload, usable, big_endian))
     } else if id == "data" {

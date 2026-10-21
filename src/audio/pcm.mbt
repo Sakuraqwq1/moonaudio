@@ -47,12 +47,7 @@ pub fn quantize(value : Double, format : SampleFormat) -> Int32 {
     U8 => quantize_scaled(sample * 127.5 + 127.5, 0.0, 255.0)
     I16 => quantize_scaled(sample * 32768.0, -32768.0, 32767.0)
     I24 => quantize_scaled(sample * 8388608.0, -8388608.0, 8388607.0)
-    I32 =>
-      quantize_scaled(
-        sample * 2147483648.0,
-        -2147483648.0,
-        2147483647.0,
-      )
+    I32 => quantize_scaled(sample * 2147483648.0, -2147483648.0, 2147483647.0)
     F32 | F64 => 0
   }
 }
@@ -79,7 +74,7 @@ pub fn sign_extend(raw : Int32, bits : Int32) -> Int32 {
     return raw
   }
   let shift = 32 - bits
-  (raw << shift) >> shift
+  raw << shift >> shift
 }
 
 ///|

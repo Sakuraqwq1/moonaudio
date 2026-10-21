@@ -9,7 +9,7 @@
 /// PCM, the format every player understands.
 pub fn encode(
   audio : @audio.AudioBuffer,
-  format? : @audio.SampleFormat = @audio.I16,
+  format~ : @audio.SampleFormat = @audio.I16,
 ) -> Bytes raise @audio.AudioError {
   encode_with_metadata(audio, format, [])
 }

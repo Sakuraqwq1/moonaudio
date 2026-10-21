@@ -16,8 +16,9 @@ struct BitWriter {
 ///|
 /// A fresh, empty bit writer.
 fn BitWriter::new() -> BitWriter {
-  BitWriter::{ bytes: [], bit: 0 }
+  BitWriter::{ bytes: [], bit: 0, }
 }
+
 ///|
 /// ASCII bytes for a text literal, avoiding the deprecated String::to_bytes.
 fn ascii_bytes(text : String) -> Bytes {
@@ -32,10 +33,12 @@ fn ascii_bytes(text : String) -> Bytes {
 /// Decode ytes and return the audio with the decoder's message (if any).
 fn decode_or_message(bytes : Bytes) -> (@audio.AudioBuffer, String) {
   let mut message = "ok"
-  let audio = decode(bytes) catch { (error : @audio.AudioError) => {
-    message = error.message()
-    @audio.AudioBuffer::new(0, 1)
-  } }
+  let audio = decode(bytes) catch {
+    (error : @audio.AudioError) => {
+      message = error.message()
+      @audio.AudioBuffer::new(0, 1)
+    }
+  }
   (audio, message)
 }
 
@@ -43,13 +46,14 @@ fn decode_or_message(bytes : Bytes) -> (@audio.AudioBuffer, String) {
 /// Decode ytes and report the error kind, or "ok".
 fn decode_error_kind(bytes : Bytes) -> String {
   let mut kind = "ok"
-  let _ = decode(bytes) catch { (error : @audio.AudioError) => {
-    kind = error.kind()
-    @audio.AudioBuffer::new(0, 1)
-  } }
+  let _ = decode(bytes) catch {
+    (error : @audio.AudioError) => {
+      kind = error.kind()
+      @audio.AudioBuffer::new(0, 1)
+    }
+  }
   kind
 }
-
 
 ///|
 /// Append one bit.
@@ -196,8 +200,7 @@ fn fixed_residuals(samples : Array[Int32], order : Int32) -> Array[Int32] {
       0 => 0
       1 => samples[index - 1]
       2 => 2 * samples[index - 1] - samples[index - 2]
-      3 =>
-        3 * samples[index - 1] - 3 * samples[index - 2] + samples[index - 3]
+      3 => 3 * samples[index - 1] - 3 * samples[index - 2] + samples[index - 3]
       4 =>
         4 * samples[index - 1] -
         6 * samples[index - 2] +
@@ -232,11 +235,19 @@ fn lpc_residuals(
 
 ///|
 /// Emit one Rice-coded residual block (single partition, method 0).
-fn write_rice(writer : BitWriter, residuals : Array[Int32], parameter : Int32) -> Unit {
+fn write_rice(
+  writer : BitWriter,
+  residuals : Array[Int32],
+  parameter : Int32,
+) -> Unit {
   for value in residuals {
-    let zigzag = if value < 0 { ((-value) << 1) - 1 } else { value << 1 }
+    let zigzag = if value < 0 { (-value << 1) - 1 } else { value << 1 }
     let quotient = if parameter == 0 { zigzag } else { zigzag >> parameter }
-    let remainder = if parameter == 0 { 0 } else { zigzag & ((1 << parameter) - 1) }
+    let remainder = if parameter == 0 {
+      0
+    } else {
+      zigzag & ((1 << parameter) - 1)
+    }
     writer.write_unary(quotient)
     if parameter > 0 {
       writer.write_bits(remainder, parameter)
@@ -309,7 +320,7 @@ fn write_fixed_partitioned(
   bps : Int32,
   order : Int32,
   partition_order : Int32,
-  escape_first? : Bool = false,
+  escape_first~ : Bool = false,
 ) -> Unit {
   writer.write_bit(0)
   writer.write_bits(8 + order, 6)
@@ -325,11 +336,7 @@ fn write_fixed_partitioned(
   let part_size = block_size >> partition_order
   let mut cursor = 0
   for partition = 0; partition < partitions; partition = partition + 1 {
-    let count = if partition == 0 {
-      part_size - order
-    } else {
-      part_size
-    }
+    let count = if partition == 0 { part_size - order } else { part_size }
     let escaped = escape_first && partition == 0
     if escaped {
       writer.write_bits(0x0F, 4)
@@ -343,11 +350,7 @@ fn write_fixed_partitioned(
       writer.write_bits(parameter, 4)
       for _index = 0; _index < count; _index = _index + 1 {
         let value = residual[cursor]
-        let zigzag = if value < 0 {
-          ((-value) << 1) - 1
-        } else {
-          value << 1
-        }
+        let zigzag = if value < 0 { (-value << 1) - 1 } else { value << 1 }
         writer.write_unary(zigzag >> parameter)
         writer.write_bits(zigzag & ((1 << parameter) - 1), parameter)
         cursor = cursor + 1
@@ -366,7 +369,7 @@ fn write_frame(
   blocking_strategy : Int32,
   frame_number : Int64,
   kinds : Array[SubKind],
-  side_extra_bits? : Int32 = 0,
+  side_extra_bits~ : Int32 = 0,
 ) -> Unit {
   let _ = sample_rate
   let block_size = channels[0].length()
@@ -389,11 +392,7 @@ fn write_frame(
   writer.write_bits(block_size - 1, 16)
   writer.align()
   let header_end = writer.byte_position()
-  let header_crc = crc8(
-    writer.to_bytes(),
-    start,
-    header_end,
-  )
+  let header_crc = crc8(writer.to_bytes(), start, header_end)
   writer.write_bits(header_crc, 8)
   for channel = 0; channel < channels.length(); channel = channel + 1 {
     let mut channel_bps = bps
@@ -449,7 +448,7 @@ fn make_flac(
   total_samples : Int64,
   frames : Array[Array[Array[Int32]]],
   kinds : Array[Array[SubKind]],
-  side_extra_bits? : Int32 = 0,
+  side_extra_bits~ : Int32 = 0,
 ) -> Bytes {
   let writer = BitWriter::new()
   writer.write_bits(0x66, 8)
@@ -479,7 +478,9 @@ fn make_flac(
   }
   let out = BitWriter::new()
   out.write_raw(Bytes::from_array(patched[:]))
-  for frame_index = 0; frame_index < frames.length(); frame_index = frame_index + 1 {
+  for frame_index = 0
+      frame_index < frames.length()
+      frame_index = frame_index + 1 {
     write_frame(
       out,
       frames[frame_index],
@@ -540,16 +541,20 @@ test "bit writer and reader roundtrip" {
   assert_eq(reader.read_bits(3), 0)
   let empty = BitReader::new(Bytes::make(0, 0))
   let mut exhausted = "ok"
-  let _ = empty.read_bit() catch { (error : @audio.AudioError) => {
-    exhausted = error.kind()
-    0
-  } }
+  let _ = empty.read_bit() catch {
+    (error : @audio.AudioError) => {
+      exhausted = error.kind()
+      0
+    }
+  }
   assert_eq(exhausted, "truncated")
 }
 
 ///|
 test "utf8 coded numbers roundtrip" {
-  let values : Array[Int64] = [0L, 1L, 127L, 128L, 4095L, 4096L, 100000L, 2097151L, 2097152L, 3000000000L]
+  let values : Array[Int64] = [
+    0L, 1L, 127L, 128L, 4095L, 4096L, 100000L, 2097151L, 2097152L, 3000000000L,
+  ]
   for value in values {
     let writer = BitWriter::new()
     write_utf8_number(writer, value)
@@ -600,16 +605,11 @@ test "constant subframes decode exactly" {
 test "every fixed predictor order reconstructs" {
   for order = 0; order <= 4; order = order + 1 {
     let samples = pseudo(3 + order, 24, 500)
-    let stream = make_flac(
-      16000,
-      1,
-      16,
-      24L,
-      [[samples]],
-      [[SubKind::Fixed(order)]],
-    )
+    let stream = make_flac(16000, 1, 16, 24L, [[samples]], [
+      [SubKind::Fixed(order)],
+    ])
     let (audio, decode_message) = decode_or_message(stream)
-  assert_eq(decode_message, "ok")
+    assert_eq(decode_message, "ok")
     assert_eq(audio.frames(), 24)
     for index = 0; index < 24; index = index + 1 {
       let expected = samples[index].to_double() / 32768.0
@@ -622,14 +622,9 @@ test "every fixed predictor order reconstructs" {
 test "lpc subframes reconstruct" {
   let samples = pseudo(19, 40, 3000)
   let coefficients : Array[Int32] = [2, -1]
-  let stream = make_flac(
-    44100,
-    1,
-    16,
-    40L,
-    [[samples]],
-    [[SubKind::Lpc(2, coefficients, 1)]],
-  )
+  let stream = make_flac(44100, 1, 16, 40L, [[samples]], [
+    [SubKind::Lpc(2, coefficients, 1)],
+  ])
   let (audio, decode_message) = decode_or_message(stream)
   assert_eq(decode_message, "ok")
   assert_eq(audio.frames(), 40)
@@ -663,8 +658,13 @@ test "mid side stereo is decorrelated" {
   assert_eq(decode_message, "ok")
   assert_eq(audio.channels, 2)
   for index = 0; index < 32; index = index + 1 {
-    assert_true((audio.data[index * 2] - left[index].to_double() / 32768.0).abs() < 1.0e-9)
-    assert_true((audio.data[index * 2 + 1] - right[index].to_double() / 32768.0).abs() < 1.0e-9)
+    assert_true(
+      (audio.data[index * 2] - left[index].to_double() / 32768.0).abs() < 1.0e-9,
+    )
+    assert_true(
+      (audio.data[index * 2 + 1] - right[index].to_double() / 32768.0).abs() <
+      1.0e-9,
+    )
   }
 }
 
@@ -673,21 +673,24 @@ test "independent multi channel frames decode" {
   let a = pseudo(31, 16, 100)
   let b = pseudo(37, 16, 100)
   let c = pseudo(41, 16, 100)
-  let stream = make_flac(
-    48000,
-    3,
-    16,
-    16L,
-    [[a, b, c]],
-    [[SubKind::Verbatim, SubKind::Verbatim, SubKind::Verbatim]],
-  )
+  let stream = make_flac(48000, 3, 16, 16L, [[a, b, c]], [
+    [SubKind::Verbatim, SubKind::Verbatim, SubKind::Verbatim],
+  ])
   let (audio, decode_message) = decode_or_message(stream)
   assert_eq(decode_message, "ok")
   assert_eq(audio.channels, 3)
   for frame = 0; frame < 16; frame = frame + 1 {
-    assert_true((audio.data[frame * 3] - a[frame].to_double() / 32768.0).abs() < 1.0e-9)
-    assert_true((audio.data[frame * 3 + 1] - b[frame].to_double() / 32768.0).abs() < 1.0e-9)
-    assert_true((audio.data[frame * 3 + 2] - c[frame].to_double() / 32768.0).abs() < 1.0e-9)
+    assert_true(
+      (audio.data[frame * 3] - a[frame].to_double() / 32768.0).abs() < 1.0e-9,
+    )
+    assert_true(
+      (audio.data[frame * 3 + 1] - b[frame].to_double() / 32768.0).abs() <
+      1.0e-9,
+    )
+    assert_true(
+      (audio.data[frame * 3 + 2] - c[frame].to_double() / 32768.0).abs() <
+      1.0e-9,
+    )
   }
 }
 
@@ -695,33 +698,20 @@ test "independent multi channel frames decode" {
 test "many frames are concatenated" {
   let first = pseudo(43, 8, 500)
   let second = pseudo(47, 8, 500)
-  let stream = make_flac(
-    8000,
-    1,
-    16,
-    16L,
-    [[first], [second]],
-    [[SubKind::Verbatim], [SubKind::Verbatim]],
-  )
+  let stream = make_flac(8000, 1, 16, 16L, [[first], [second]], [
+    [SubKind::Verbatim],
+    [SubKind::Verbatim],
+  ])
   let (audio, decode_message) = decode_or_message(stream)
   assert_eq(decode_message, "ok")
   assert_eq(audio.frames(), 16)
-  assert_true(
-    (audio.data[8] - second[0].to_double() / 32768.0).abs() < 1.0e-9,
-  )
+  assert_true((audio.data[8] - second[0].to_double() / 32768.0).abs() < 1.0e-9)
 }
 
 ///|
 test "24 bit streams normalise by bit depth" {
   let samples = pseudo(53, 16, 100000)
-  let stream = make_flac(
-    96000,
-    1,
-    24,
-    16L,
-    [[samples]],
-    [[SubKind::Verbatim]],
-  )
+  let stream = make_flac(96000, 1, 24, 16L, [[samples]], [[SubKind::Verbatim]])
   let (audio, decode_message) = decode_or_message(stream)
   assert_eq(decode_message, "ok")
   let expected = samples[0].to_double() / 8388608.0
@@ -731,26 +721,11 @@ test "24 bit streams normalise by bit depth" {
 ///|
 test "big frame numbers use the extended encoding" {
   let samples = pseudo(59, 8, 50)
-  let stream = make_flac(
-    44100,
-    1,
-    16,
-    8L,
-    [[samples]],
-    [[SubKind::Verbatim]],
-  )
+  let stream = make_flac(44100, 1, 16, 8L, [[samples]], [[SubKind::Verbatim]])
   // Patch the frame number by writing a fresh frame with a large number.
   let writer = BitWriter::new()
   writer.write_raw(stream.exact_view(start=0, end=42).to_owned())
-  write_frame(
-    writer,
-    [samples],
-    16,
-    44100,
-    1,
-    3000000L,
-    [SubKind::Verbatim],
-  )
+  write_frame(writer, [samples], 16, 44100, 1, 3000000L, [SubKind::Verbatim])
   let (audio, decode_message) = decode_or_message(writer.to_bytes())
   assert_eq(decode_message, "ok")
   assert_eq(audio.frames(), 8)
@@ -791,13 +766,7 @@ test "metadata comments are parsed" {
   let bytes = writer.to_bytes()
   let patched : Array[Byte] = []
   for index = 0; index < bytes.length(); index = index + 1 {
-    patched.push(
-      if index == 4 {
-        bytes.at(index)
-      } else {
-        bytes.at(index)
-      },
-    )
+    patched.push(if index == 4 { bytes.at(index) } else { bytes.at(index) })
   }
   let stream = BitWriter::new()
   stream.write_raw(Bytes::from_array(patched[:]))
@@ -817,15 +786,7 @@ test "metadata comments are parsed" {
   comment.write_raw(payload)
   stream.write_raw(comment.to_bytes())
   let frame = BitWriter::new()
-  write_frame(
-    frame,
-    [Array::make(4, 0)],
-    16,
-    44100,
-    0,
-    0L,
-    [SubKind::Constant],
-  )
+  write_frame(frame, [Array::make(4, 0)], 16, 44100, 0, 0L, [SubKind::Constant])
   stream.write_raw(frame.to_bytes())
   let info = parse_info(stream.to_bytes()) catch {
     (_ : @audio.AudioError) => panic()
@@ -839,7 +800,9 @@ test "metadata comments are parsed" {
 ///|
 test "partitioned rice residuals with an escape partition" {
   let samples = pseudo(71, 16, 400)
-  for partition_order = 0; partition_order <= 2; partition_order = partition_order + 1 {
+  for partition_order = 0
+      partition_order <= 2
+      partition_order = partition_order + 1 {
     let writer = BitWriter::new()
     writer.write_raw(ascii_bytes("fLaC"))
     write_stream_info(writer, 8000, 1, 16, 16L, 16)
@@ -872,7 +835,14 @@ test "partitioned rice residuals with an escape partition" {
     let header_end = frame.byte_position()
     let header_crc = crc8(frame.to_bytes(), start, header_end)
     frame.write_bits(header_crc, 8)
-    write_fixed_partitioned(frame, samples, 16, 2, partition_order, escape_first=true)
+    write_fixed_partitioned(
+      frame,
+      samples,
+      16,
+      2,
+      partition_order,
+      escape_first=true,
+    )
     frame.align()
     let end = frame.byte_position()
     let frame_crc = crc16(frame.to_bytes(), start, end)
@@ -894,12 +864,16 @@ test "12 and 20 bit streams normalise correctly" {
   for bps = 12; bps <= 20; bps = bps + 8 {
     let range = (1 << (bps - 1)) - 1
     let samples = pseudo(77 + bps, 16, range)
-    let stream = make_flac(44100, 1, bps, 16L, [[samples]], [[SubKind::Verbatim]])
+    let stream = make_flac(44100, 1, bps, 16L, [[samples]], [
+      [SubKind::Verbatim],
+    ])
     let (audio, message) = decode_or_message(stream)
     assert_eq(message, "ok")
     let scale = 1.0 / (1 << (bps - 1)).to_double()
     for index = 0; index < 16; index = index + 1 {
-      assert_true((audio.data[index] - samples[index].to_double() * scale).abs() < 1.0e-12)
+      assert_true(
+        (audio.data[index] - samples[index].to_double() * scale).abs() < 1.0e-12,
+      )
     }
   }
 }
