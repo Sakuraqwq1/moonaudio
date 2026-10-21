@@ -38,7 +38,7 @@
    git remote add github https://github.com/Sakuraqwq1/moonaudio
    git push github main
    ```
-   推送后到 Actions 页面确认 `CI` 工作流三条 job 全绿。特别留意 `moon fmt --check`：本机无法执行它（该命令会从 mooncakes 拉取 `moonbitlang/parser/cmd/moonfmt`，本机 HTTPS 不通），我是用工具链自带的 `moonfmt -w` 格式化的，**格式器版本差异可能导致 CI 的格式检查失败**。若 CI 报格式问题，在本地有网环境跑一次 `moon fmt` 再提交即可。
+   推送后到 Actions 页面确认 `CI` 工作流三条 job 全绿。特别留意 `moon fmt --check`：本机无法执行它（该命令会从 mooncakes 拉取 `moonbitlang/parser/cmd/moonfmt`，本机 HTTPS 不通），我是用工具链自带的 `moonfmt -w` 验证的：对全部 53 个 `.mbt` 重跑一遍后 `git status` 无改动，说明格式稳定；CI 里也已加上 `moon fmt` 不可用时的 `moonfmt` 回退检查。若 CI 报格式问题，在本地有网环境跑一次 `moon fmt` 再提交即可。
 
 3. **FLAC 只用合成流验证过。** 本机无法访问 `raw.githubusercontent.com`，官方 `flac-test-files` 下不下来，所以解码器是用仓库内独立实现的位流写入器构造的规范流来测的（覆盖 constant/verbatim/fixed 0-4/LPC、Rice 分区与 escape、wasted bits、左/右/中-边、12/16/20/24-bit、变长块、超长帧号、CRC 失败、截断）。位流路径、CRC、分区逻辑都被覆盖，但**真实编码器的差异（例如极端 LPC 阶数、非常规分区、8 声道 192kHz）没有被真文件验证**。建议在有网环境补一次交叉验证（见「建议改进」第 2 条）。
 
@@ -53,7 +53,7 @@
 
 ## 建议改进
 
-1. **把 CLI 抽成可测函数。** 现在 `cmd/main/main.mbt` 的参数解析与命令分派没有单元测试（`main` 无法直接测）。把 `parse_command` 提出来返回一个 `Command` 枚举，就能用表驱动测试覆盖全部子命令与错误分支，成本约半小时。
+1. **继续把 CLI 的命令分派做成表驱动测试。** 纯函数部分（`option`/`flag`/`drop_program_name`/`int_option`/`double_option`/`format_double`/`pad3`/`format_dbfs`/`dominant_frequency`）已经补了 8 个白盒测试；`run_info` 这类直接打印的命令仍只能靠手工实跑验证，若想覆盖，需要把输出改成可注入的 `logger`。
 2. **CI 增加真实 FLAC 一致性 job。** 在 GitHub Actions（有网）里下载 `ietf-wg-cellar/flac-test-files` 的 subset，用 CLI 解码后比对 `STREAMINFO` 的总样本数与 CRC 是否全部通过；这能补上当前最大的验证缺口。
 3. **补 FLAC 编码器或明确移除路线图依赖。** 目前 FLAC 只解码，README 已如实标注；如果验收方期待「编解码对称」，可以在申报书里把编码器写成第二阶段目标。
 4. **报告里做性能基线。** `moon bench` 或简单的 `now()` 计时，给出「解码 1 分钟 44.1kHz 立体声 WAV/FLAC 耗时」，展示性能不是短板。
@@ -71,10 +71,10 @@ $ moon check --deny-warn
 Finished. moon: no work to do                       # 0 errors, 0 warnings
 
 $ moon test --deny-warn
-Total tests: 130, passed: 130, failed: 0.
+Total tests: 138, passed: 138, failed: 0.
 
 $ moon test --target wasm-gc
-Total tests: 130, passed: 130, failed: 0.
+Total tests: 138, passed: 138, failed: 0.
 
 $ moon build --target wasm-gc / --target native
 Finished. moon: ... now up to date

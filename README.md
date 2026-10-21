@@ -27,8 +27,8 @@ println(audio.peak_dbfs())                 // 峰值电平
 | DSP | 窗函数、基-2 FFT 与实 FFT、幅度谱、频谱图、biquad 滤波、统计、淡入淡出、混音、测试音、确定性白噪声 |
 | 重采样 | 线性、Catmull-Rom 三次、窗函数 sinc（带抗混叠截止） |
 | 依赖 | 仅 `moonbitlang/core`，无外部包 |
-| 测试 | 130 个单元测试，覆盖正常路径与错误路径 |
-| CI | Linux / macOS / Windows 三平台 `check`、`test`、`fmt`、接口一致性检查 |
+| 测试 | 138 个单元测试，覆盖正常路径与错误路径 |
+| CI | Linux / macOS / Windows 三平台 `check`、`test`、`fmt`、接口一致性检查，另有真实 FLAC 文件的一致性任务 |
 
 格式支持细节与明确不支持项见 [`docs/format-support.md`](docs/format-support.md)，架构说明见 [`docs/architecture.md`](docs/architecture.md)。
 
