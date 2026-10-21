@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/au"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn decode(Bytes) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn encode(@audio.AudioBuffer, format? : @audio.SampleFormat) -> Bytes raise @audio.AudioError
+
+pub fn encode_with_annotation(@audio.AudioBuffer, @audio.SampleFormat, String) -> Bytes raise @audio.AudioError
+
+pub fn parse(Bytes) -> AuFile raise @audio.AudioError
+
+pub fn parse_info(Bytes) -> AuInfo raise @audio.AudioError
+
+// Errors
+
+// Types and methods
+pub(all) struct AuFile {
+  info : AuInfo
+  audio : @audio.AudioBuffer
+}
+
+pub(all) struct AuInfo {
+  sample_rate : Int32
+  channels : Int32
+  frames : Int32
+  format : @audio.SampleFormat
+  encoding : Int32
+  encoding_name : String
+  annotation : String
+  header_size : Int32
+}
+pub fn AuInfo::describe(Self) -> String
+
+// Type aliases
+
+// Traits
