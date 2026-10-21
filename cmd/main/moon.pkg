@@ -1,0 +1,5 @@
+// import {
+//   "username/moonschema" @lib,
+// }
+
+pkgtype(kind: "executable")
