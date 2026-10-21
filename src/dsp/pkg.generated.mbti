@@ -1,0 +1,133 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/dsp"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn analyse(@audio.AudioBuffer, silence_threshold? : Double) -> AudioStats
+
+pub fn fade_in(@audio.AudioBuffer, Int32) -> @audio.AudioBuffer
+
+pub fn fade_out(@audio.AudioBuffer, Int32) -> @audio.AudioBuffer
+
+pub fn fft(Array[Complex]) -> Array[Complex] raise @audio.AudioError
+
+pub fn ifft(Array[Complex]) -> Array[Complex] raise @audio.AudioError
+
+pub fn magnitude(Array[Complex], n? : Int32) -> Array[Double]
+
+pub fn mix(@audio.AudioBuffer, @audio.AudioBuffer, gain_a? : Double, gain_b? : Double) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn power_spectrum(Array[Double], window? : Array[Double]) -> Array[Double]
+
+pub fn real_fft(Array[Double]) -> Array[Complex]
+
+pub fn remove_dc_offset(@audio.AudioBuffer) -> @audio.AudioBuffer
+
+pub fn spectrogram(@audio.AudioBuffer, fft_size? : Int32, hop? : Int32, window? : WindowKind) -> Spectrogram raise @audio.AudioError
+
+pub fn tone(Double, Int32, Int32, amplitude? : Double, phase? : Double) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn trim_silence(@audio.AudioBuffer, threshold? : Double) -> @audio.AudioBuffer
+
+pub fn white_noise(Int32, Int32, Int64, amplitude? : Double) -> @audio.AudioBuffer
+
+// Errors
+
+// Types and methods
+pub(all) struct AudioStats {
+  frames : Int32
+  channels : Int32
+  sample_rate : Int32
+  peak : Double
+  peak_dbfs : Double
+  rms : Double
+  rms_dbfs : Double
+  crest_factor : Double
+  zero_crossing_rate : Double
+  dc_offset : Double
+  silent_frames : Int32
+  duration_seconds : Double
+}
+pub fn AudioStats::to_lines(Self) -> String
+
+pub(all) struct Biquad {
+  b0 : Double
+  b1 : Double
+  b2 : Double
+  a1 : Double
+  a2 : Double
+}
+pub fn Biquad::apply(Self, Array[Double]) -> Array[Double]
+pub fn Biquad::apply_buffer(Self, @audio.AudioBuffer) -> @audio.AudioBuffer
+pub fn Biquad::new(FilterKind, Int32, Double, q? : Double, gain_db? : Double) -> Self raise @audio.AudioError
+pub fn Biquad::process_sample(Self, Double, BiquadState) -> Double
+
+pub(all) struct BiquadState {
+  mut x1 : Double
+  mut x2 : Double
+  mut y1 : Double
+  mut y2 : Double
+}
+pub fn BiquadState::new() -> Self
+
+pub(all) struct Complex {
+  re : Double
+  im : Double
+}
+pub fn Complex::add(Self, Self) -> Self
+pub fn Complex::conjugate(Self) -> Self
+pub fn Complex::magnitude(Self) -> Double
+pub fn Complex::mul(Self, Self) -> Self
+pub fn Complex::neg(Self) -> Self
+pub fn Complex::new(Double, Double) -> Self
+pub fn Complex::phase(Self) -> Double
+pub fn Complex::same(Self, Self) -> Bool
+pub fn Complex::scale(Self, Double) -> Self
+pub fn Complex::sub(Self, Self) -> Self
+pub fn Complex::zero() -> Self
+pub impl Add for Complex
+pub impl Mul for Complex
+pub impl Neg for Complex
+pub impl Sub for Complex
+
+pub(all) enum FilterKind {
+  LowPass
+  HighPass
+  BandPass
+  Notch
+  Peaking
+  LowShelf
+  HighShelf
+}
+
+pub(all) struct Spectrogram {
+  sample_rate : Int32
+  fft_size : Int32
+  hop : Int32
+  frames : Array[Array[Double]]
+  max_db : Double
+  min_db : Double
+}
+pub fn Spectrogram::bin_hz(Self) -> Double
+pub fn Spectrogram::peak_frequency(Self, Int32, bin_hz? : Double) -> Double
+pub fn Spectrogram::size(Self) -> (Int32, Int32)
+pub fn Spectrogram::to_csv(Self) -> String
+pub fn Spectrogram::to_svg(Self, width? : Int32, height? : Int32) -> String
+
+pub(all) enum WindowKind {
+  Rectangular
+  Hann
+  Hamming
+  Blackman
+  BlackmanHarris
+  Kaiser
+}
+pub fn WindowKind::coefficients(Self, Int32, beta? : Double) -> Array[Double]
+pub fn WindowKind::to_name(Self) -> String
+
+// Type aliases
+
+// Traits
