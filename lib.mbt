@@ -76,11 +76,9 @@ pub fn sniff(bytes : Bytes) -> Container? {
 pub fn decode(bytes : Bytes) -> @audio.AudioBuffer raise @audio.AudioError {
   match sniff(bytes) {
     Some(Wav) => @wav.decode(bytes)
+    Some(Aiff) => @aiff.decode(bytes)
+    Some(Au) => @au.decode(bytes)
     Some(Flac) => @flac.decode(bytes)
-    Some(other) =>
-      raise @audio.Unsupported(
-        "no decoder wired for the \{other.to_name()} container yet",
-      )
     None => raise @audio.Unsupported("unrecognised audio container")
   }
 }
@@ -96,11 +94,9 @@ pub fn decode_detected(
   }
   let audio = match container {
     Wav => @wav.decode(bytes)
+    Aiff => @aiff.decode(bytes)
+    Au => @au.decode(bytes)
     Flac => @flac.decode(bytes)
-    other =>
-      raise @audio.Unsupported(
-        "no decoder wired for the \{other.to_name()} container yet",
-      )
   }
   (container, audio)
 }
@@ -110,11 +106,9 @@ pub fn decode_detected(
 pub fn describe(bytes : Bytes) -> String raise @audio.AudioError {
   match sniff(bytes) {
     Some(Wav) => @wav.parse_info(bytes).describe()
+    Some(Aiff) => @aiff.parse_info(bytes).describe()
+    Some(Au) => @au.parse_info(bytes).describe()
     Some(Flac) => @flac.parse_info(bytes).describe()
-    Some(other) =>
-      raise @audio.Unsupported(
-        "no metadata reader wired for the \{other.to_name()} container yet",
-      )
     None => raise @audio.Unsupported("unrecognised audio container")
   }
 }
