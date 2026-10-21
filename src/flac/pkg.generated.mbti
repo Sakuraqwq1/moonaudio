@@ -1,0 +1,102 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/flac"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn crc16(Bytes, Int32, Int32) -> Int32
+
+pub fn crc8(Bytes, Int32, Int32) -> Int32
+
+pub fn declared_frames(FlacInfo) -> Int32
+
+pub fn decode(Bytes) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn decode_frame(Bytes, Int32, FlacInfo, verify_crc? : Bool) -> (Array[Array[Int32]], FrameHeader, Int32) raise @audio.AudioError
+
+pub fn decode_with_info(Bytes, FlacInfo, verify_crc? : Bool) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn is_flac(Bytes) -> Bool
+
+pub fn parse(Bytes) -> FlacFile raise @audio.AudioError
+
+pub fn parse_frame_header(Bytes, Int32, FlacInfo) -> FrameHeader raise @audio.AudioError
+
+pub fn parse_info(Bytes) -> FlacInfo raise @audio.AudioError
+
+// Errors
+
+// Types and methods
+pub(all) struct BitReader {
+  data : Bytes
+  mut bit : Int32
+}
+pub fn BitReader::align(Self) -> Unit
+pub fn BitReader::has(Self, Int32) -> Bool
+pub fn BitReader::new(Bytes, bit? : Int32) -> Self
+pub fn BitReader::position(Self) -> Int32
+pub fn BitReader::read_bit(Self) -> Int32 raise @audio.AudioError
+pub fn BitReader::read_bits(Self, Int32) -> Int32 raise @audio.AudioError
+pub fn BitReader::read_bits64(Self, Int32) -> Int64 raise @audio.AudioError
+pub fn BitReader::read_byte(Self) -> Int32 raise @audio.AudioError
+pub fn BitReader::read_bytes(Self, Int32) -> Bytes raise @audio.AudioError
+pub fn BitReader::read_signed(Self, Int32) -> Int32 raise @audio.AudioError
+pub fn BitReader::read_signed64(Self, Int32) -> Int64 raise @audio.AudioError
+pub fn BitReader::read_unary(Self, limit? : Int32) -> Int32 raise @audio.AudioError
+pub fn BitReader::read_utf8_uint(Self) -> Int64 raise @audio.AudioError
+pub fn BitReader::remaining(Self) -> Int32
+
+pub(all) struct Crc16 {
+  mut value : Int32
+}
+pub fn Crc16::new() -> Self
+pub fn Crc16::update(Self, Int32) -> Unit
+pub fn Crc16::value(Self) -> Int32
+
+pub(all) struct FlacFile {
+  info : FlacInfo
+  audio : @audio.AudioBuffer
+}
+
+pub(all) struct FlacInfo {
+  sample_rate : Int32
+  channels : Int32
+  bits_per_sample : Int32
+  total_samples : Int64
+  min_block_size : Int32
+  max_block_size : Int32
+  min_frame_size : Int32
+  max_frame_size : Int32
+  md5 : String
+  metadata : Array[(String, String)]
+  blocks : Array[MetaBlock]
+  stream_offset : Int32
+}
+pub fn FlacInfo::describe(Self) -> String
+pub fn FlacInfo::duration_seconds(Self) -> Double
+pub fn FlacInfo::meta(Self, String) -> String?
+
+pub(all) struct FrameHeader {
+  block_size : Int32
+  sample_rate : Int32
+  channels : Int32
+  bits_per_sample : Int32
+  channel_assignment : Int32
+  blocking_strategy : Int32
+  number : Int64
+  payload_offset : Int32
+  header_crc8 : Int32
+}
+
+pub(all) struct MetaBlock {
+  kind : Int32
+  offset : Int32
+  length : Int32
+  last : Bool
+}
+
+// Type aliases
+
+// Traits

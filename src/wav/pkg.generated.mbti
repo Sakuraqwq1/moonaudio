@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/wav"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn decode(Bytes) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn encode(@audio.AudioBuffer, format? : @audio.SampleFormat) -> Bytes raise @audio.AudioError
+
+pub fn encode_with_metadata(@audio.AudioBuffer, @audio.SampleFormat, Array[(String, String)]) -> Bytes raise @audio.AudioError
+
+pub fn parse(Bytes) -> WavFile raise @audio.AudioError
+
+pub fn parse_info(Bytes) -> WavInfo raise @audio.AudioError
+
+// Errors
+
+// Types and methods
+pub(all) struct ChunkRef {
+  id : String
+  offset : Int32
+  size : Int32
+}
+
+pub(all) struct WavFile {
+  info : WavInfo
+  audio : @audio.AudioBuffer
+}
+
+pub(all) struct WavInfo {
+  sample_rate : Int32
+  channels : Int32
+  frames : Int32
+  format : @audio.SampleFormat
+  format_tag : Int32
+  bits_per_sample : Int32
+  valid_bits : Int32
+  channel_mask : Int64
+  byte_rate : Int64
+  extensible : Bool
+  chunks : Array[ChunkRef]
+  metadata : Array[(String, String)]
+}
+pub fn WavInfo::block_align(Self) -> Int32
+pub fn WavInfo::describe(Self) -> String
+pub fn WavInfo::meta(Self, String) -> String?
+
+// Type aliases
+
+// Traits

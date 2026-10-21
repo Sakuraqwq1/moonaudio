@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn decode(Bytes) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn decode_detected(Bytes) -> (Container, @audio.AudioBuffer) raise @audio.AudioError
+
+pub fn describe(Bytes) -> String raise @audio.AudioError
+
+pub fn sniff(Bytes) -> Container?
+
+pub fn version() -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Container {
+  Wav
+  Aiff
+  Au
+  Flac
+}
+pub fn Container::extension(Self) -> String
+pub fn Container::to_name(Self) -> String
+
+// Type aliases
+
+// Traits

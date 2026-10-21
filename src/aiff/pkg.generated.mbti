@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/aiff"
+
+import {
+  "Sakuraqwq1/moonaudio/src/audio",
+}
+
+// Values
+pub fn decode(Bytes) -> @audio.AudioBuffer raise @audio.AudioError
+
+pub fn double_to_ext_float(Double) -> Bytes raise @audio.AudioError
+
+pub fn encode(@audio.AudioBuffer, format? : @audio.SampleFormat) -> Bytes raise @audio.AudioError
+
+pub fn encode_with_metadata(@audio.AudioBuffer, @audio.SampleFormat, Array[(String, String)]) -> Bytes raise @audio.AudioError
+
+pub fn ext_float_to_double(Bytes, Int32) -> Double raise @audio.AudioError
+
+pub fn parse(Bytes) -> AiffFile raise @audio.AudioError
+
+pub fn parse_info(Bytes) -> AiffInfo raise @audio.AudioError
+
+// Errors
+
+// Types and methods
+pub(all) struct AiffFile {
+  info : AiffInfo
+  audio : @audio.AudioBuffer
+}
+
+pub(all) struct AiffInfo {
+  sample_rate : Int32
+  channels : Int32
+  frames : Int32
+  format : @audio.SampleFormat
+  bits_per_sample : Int32
+  compression : String
+  is_aifc : Bool
+  chunks : Array[(String, Int32, Int32)]
+  metadata : Array[(String, String)]
+}
+pub fn AiffInfo::describe(Self) -> String
+pub fn AiffInfo::meta(Self, String) -> String?
+
+// Type aliases
+
+// Traits

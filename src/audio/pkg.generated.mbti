@@ -1,0 +1,140 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Sakuraqwq1/moonaudio/src/audio"
+
+// Values
+pub fn alaw_decode(Int32) -> Double
+
+pub fn alaw_encode(Double) -> Int32
+
+pub fn ascii_at(Bytes, Int32, Int32) -> String?
+
+pub fn ascii_is(Bytes, Int32, Int32, String) -> Bool
+
+pub fn clamp_sample(Double) -> Double
+
+pub fn dbfs(Double) -> Double
+
+pub fn dequantize(Int32, SampleFormat) -> Double
+
+pub fn double_to_f32_bits(Double) -> Int64
+
+pub fn f32_bits_to_double(Int64) -> Double
+
+pub fn from_dbfs(Double) -> Double
+
+pub fn invalid(String) -> AudioError
+
+pub fn lerp(Double, Double, Double) -> Double
+
+pub fn mulaw_decode(Int32) -> Double
+
+pub fn mulaw_encode(Double) -> Int32
+
+pub fn out_of_range(String) -> AudioError
+
+pub fn quantize(Double, SampleFormat) -> Int32
+
+pub fn read_ascii(Bytes, Int32, Int32) -> String raise AudioError
+
+pub fn read_f32be(Bytes, Int32) -> Double raise AudioError
+
+pub fn read_f32le(Bytes, Int32) -> Double raise AudioError
+
+pub fn read_f64be(Bytes, Int32) -> Double raise AudioError
+
+pub fn read_f64le(Bytes, Int32) -> Double raise AudioError
+
+pub fn read_i16be(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_i16le(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_i24be(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_i24le(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_i32be(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_i32le(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_u16be(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_u16le(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_u24be(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_u24le(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn read_u32be(Bytes, Int32) -> Int64 raise AudioError
+
+pub fn read_u32le(Bytes, Int32) -> Int64 raise AudioError
+
+pub fn read_u8(Bytes, Int32) -> Int32 raise AudioError
+
+pub fn require_bytes(Bytes, Int32, Int32, String) -> Unit raise AudioError
+
+pub fn sign_extend(Int32, Int32) -> Int32
+
+pub fn truncated(String) -> AudioError
+
+pub fn u16le_bytes(Int32) -> Bytes
+
+pub fn unsupported(String) -> AudioError
+
+// Errors
+pub(all) suberror AudioError {
+  Truncated(String)
+  Unsupported(String)
+  Invalid(String)
+  OutOfRange(String)
+}
+pub fn AudioError::kind(Self) -> String
+pub fn AudioError::message(Self) -> String
+
+// Types and methods
+pub(all) struct AudioBuffer {
+  sample_rate : Int32
+  channels : Int32
+  data : Array[Double]
+}
+pub fn AudioBuffer::append(Self, Self) -> Unit raise AudioError
+pub fn AudioBuffer::apply_gain(Self, Double) -> Unit
+pub fn AudioBuffer::apply_gain_clamped(Self, Double) -> Unit
+pub fn AudioBuffer::copy(Self) -> Self
+pub fn AudioBuffer::duration_seconds(Self) -> Double
+pub fn AudioBuffer::frames(Self) -> Int32
+pub fn AudioBuffer::from_channels(Int32, Array[Array[Double]]) -> Self raise AudioError
+pub fn AudioBuffer::is_empty(Self) -> Bool
+pub fn AudioBuffer::new(Int32, Int32) -> Self
+pub fn AudioBuffer::normalize(Self, target? : Double) -> Double
+pub fn AudioBuffer::peak(Self) -> Double
+pub fn AudioBuffer::peak_dbfs(Self) -> Double
+pub fn AudioBuffer::push_frame(Self, ArrayView[Double]) -> Unit
+pub fn AudioBuffer::remix(Self, Int32) -> Self raise AudioError
+pub fn AudioBuffer::rms(Self) -> Double
+pub fn AudioBuffer::rms_dbfs(Self) -> Double
+pub fn AudioBuffer::sample(Self, Int32, Int32) -> Double
+pub fn AudioBuffer::set_sample(Self, Int32, Int32, Double) -> Unit
+pub fn AudioBuffer::silence(Int32, Int32, Int32) -> Self raise AudioError
+pub fn AudioBuffer::slice(Self, Int32, Int32) -> Self
+pub fn AudioBuffer::to_channels(Self) -> Array[Array[Double]]
+
+pub(all) enum SampleFormat {
+  U8
+  I16
+  I24
+  I32
+  F32
+  F64
+}
+pub fn SampleFormat::bits(Self) -> Int32
+pub fn SampleFormat::bytes(Self) -> Int32
+pub fn SampleFormat::is_float(Self) -> Bool
+pub fn SampleFormat::is_signed(Self) -> Bool
+pub fn SampleFormat::max_code(Self) -> Double
+pub fn SampleFormat::parse(String) -> Self raise AudioError
+pub fn SampleFormat::same(Self, Self) -> Bool
+pub fn SampleFormat::to_name(Self) -> String
+
+// Type aliases
+
+// Traits
