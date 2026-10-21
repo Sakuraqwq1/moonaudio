@@ -45,7 +45,11 @@ All notable changes to `moonaudio` are documented here. The format follows
   (synthesis, analysis, filtering, resampling, containers).
 - **Docs** — README, `docs/architecture.md`, `docs/format-support.md`,
   `docs/flac.md`, `docs/publishing.md`, `CONTRIBUTING.md` and `proposal.md`.
-- **CI** — `moon check --deny-warn`, `moon test --deny-warn`, `moon fmt --check` (with a`n  `moonfmt` fallback when the formatter cannot be fetched) and generated-interface`n  freshness on Linux, macOS and Windows, plus wasm-gc and native builds and a CLI`n  smoke test. A separate informational workflow decodes a real FLAC file from the`n  official test corpus.
+- **CI** — `moon check --deny-warn`, `moon test --deny-warn`, `moon fmt --check`
+  (with a bundled `moonfmt` fallback when the formatter cannot be fetched) and
+  generated-interface freshness on Linux, macOS and Windows, plus wasm-gc and
+  native builds and a CLI smoke test. A separate informational workflow decodes
+  a real FLAC file from the official test corpus.
 - 138 unit tests covering roundtrips, error paths, spec corner cases and CLI helpers.
 
 ### Known limitations
