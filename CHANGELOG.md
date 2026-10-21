@@ -4,6 +4,21 @@ All notable changes to `moonaudio` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-10-21
+
+### Fixed
+
+- CI runs on Windows: checked-out `pkg.generated.mbti` files were converted to
+  CRLF by the runner's `core.autocrlf=true`, so the interface-freshness check
+  saw eleven modified files. The repository now pins `eol=lf` in
+  `.gitattributes`.
+- `moon.pkg` files carried redundant import aliases that `moon fmt` removes;
+  the formatting check would have failed on the first CI run.
+
+### Changed
+
+- README no longer describes the package as unpublished.
+
 ## [0.3.0] - 2026-10-21
 
 ### Added

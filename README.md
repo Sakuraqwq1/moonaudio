@@ -54,7 +54,7 @@ curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash   # macOS / Linux
 # Windows: irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
 ```
 
-把 `moonaudio` 加进项目（发布到 mooncakes.io 后）：
+`moonaudio` 已发布到 [mooncakes.io](https://mooncakes.io/docs/Sakuraqwq1/moonaudio)，加进项目：
 
 ```bash
 moon add Sakuraqwq1/moonaudio
@@ -145,7 +145,7 @@ moon run cmd/main -- convert @AUDIO_B64 --rate 48000 --format s24 --container ai
 ```text
 # moonaudio demo
 
-- module version: `0.3.0`
+- module version: `0.3.1`
 - generated: 1.000 s of 440 Hz at 44.1 kHz, peak 0.800
 - encoded: 88244 byte WAV, sniffed as wav
 - header: 44100 Hz, 1 ch, 16 bit (s16), pcm, 44100 frames
