@@ -145,7 +145,7 @@ moon run cmd/main -- convert @AUDIO_B64 --rate 48000 --format s24 --container ai
 ```text
 # moonaudio demo
 
-- module version: `0.3.1`
+- module version: `0.3.2`
 - generated: 1.000 s of 440 Hz at 44.1 kHz, peak 0.800
 - encoded: 88244 byte WAV, sniffed as wav
 - header: 44100 Hz, 1 ch, 16 bit (s16), pcm, 44100 frames
@@ -224,7 +224,18 @@ moon info          # 接口若有变化会更新 pkg.generated.mbti
 - **dsp**：FFT 与朴素 DFT 对照、逆变换、Parseval、正弦峰值 bin、窗函数性质、频谱图尺寸与峰值频率、滤波器通带/阻带、统计量、淡入淡出、混音。
 - **resample**：三种核的音高与幅度、往返长度、比例约简、非法采样率。
 
-> 说明：FLAC 测试向量由仓库内的合成器生成，未导入官方 `flac-test-files` 数据（它们体积较大且无法在离线 CI 中获取）。解码器的位流路径、Rice 分区、escape 与 CRC 均被覆盖；后续可用官方测试集做交叉验证，见路线图。
+> 说明：仓库内的测试向量由合成器生成，不依赖外部数据，因此在离线 CI 中也能跑。
+> 另外用官方 [`ietf-wg-cellar/flac-test-files`](https://github.com/ietf-wg-cellar/flac-test-files) 的真实文件做过交叉验证：解码后把采样重新编码成 16-bit PCM，重算 MD5 与 FLAC `STREAMINFO` 里记录的原 PCM 摘要比对，**逐采样比特级一致**。覆盖的文件有
+>
+> | 官方文件 | 覆盖点 | 结果 |
+> | --- | --- | --- |
+> | `60 - mono audio` | 单声道基准 | 一致 |
+> | `38 - 3 channels (3.0)` | 3 声道独立编码 | 一致 |
+> | `61 - predictor overflow check, 16-bit` | 故意让 32 位预测器溢出的极端信号 | 一致 |
+> | `64 - rice partitions with escape code zero` | Rice 分区与 escape 码 0 | 一致 |
+> | `14 - wasted bits` | wasted bits 与立体声去相关 | 一致 |
+>
+> 复现方式：`git clone` 上述测试集，取其中任一 16-bit 文件，用 `@moonaudio.decode` 解码后以 `@wav.encode(..., format=@audio.I16)` 写回 WAV，比对 `data` 块的 MD5 与 `STREAMINFO` 的 MD5。
 
 ## 设计要点
 
@@ -237,7 +248,8 @@ moon info          # 接口若有变化会更新 pkg.generated.mbti
 ## 路线图
 
 - [ ] FLAC 编码器（含子帧选择与 Rice 参数搜索）
-- [ ] 导入官方 `flac-test-files` 子集做一致性交叉验证
+- [x] 用官方 `flac-test-files` 的真实文件做一致性交叉验证（见「测试」一节）
+- [ ] 把该交叉验证固化成 CI 里的定时任务，而不是一次性手动验证
 - [ ] Ogg 容器与 Vorbis/Opus 解码
 - [ ] 流式 API（边读边解码，避免整文件驻留内存）
 - [ ] 更多滤波器类型与多通道声像处理

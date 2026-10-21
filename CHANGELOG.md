@@ -4,6 +4,21 @@ All notable changes to `moonaudio` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-10-21
+
+### Verified
+
+- The FLAC decoder was cross-checked against real files from the official
+  [`ietf-wg-cellar/flac-test-files`](https://github.com/ietf-wg-cellar/flac-test-files)
+  corpus. For `60 - mono audio`, `38 - 3 channels (3.0)`,
+  `61 - predictor overflow check, 16-bit`,
+  `64 - rice partitions with escape code zero` and `14 - wasted bits`, the
+  decoded samples re-encode to PCM whose MD5 matches the digest stored in
+  `STREAMINFO`: bit-exact on every sample, including the file designed to
+  overflow 32-bit predictors.
+- README documents the procedure; the earlier "not cross-checked against real
+  files" caveat and the corresponding roadmap item are gone.
+
 ## [0.3.1] - 2026-10-21
 
 ### Fixed
