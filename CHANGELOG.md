@@ -59,7 +59,7 @@ All notable changes to `moonaudio` are documented here. The format follows
 - **Examples** — `examples/basic` (minimal end-to-end) and `examples/tour`
   (synthesis, analysis, filtering, resampling, containers).
 - **Docs** — README, `docs/architecture.md`, `docs/format-support.md`,
-  `docs/flac.md`, `docs/publishing.md`, `CONTRIBUTING.md` and `proposal.md`.
+  `docs/flac.md`, `docs/publishing.md` and `CONTRIBUTING.md`.
 - **CI** — `moon check --deny-warn`, `moon test --deny-warn`, `moon fmt --check`
   (with a bundled `moonfmt` fallback when the formatter cannot be fetched) and
   generated-interface freshness on Linux, macOS and Windows, plus wasm-gc and
