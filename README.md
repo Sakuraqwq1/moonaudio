@@ -27,10 +27,22 @@ println(audio.peak_dbfs())                 // 峰值电平
 | DSP | 窗函数、基-2 FFT 与实 FFT、幅度谱、频谱图、biquad 滤波、统计、淡入淡出、混音、测试音、确定性白噪声 |
 | 重采样 | 线性、Catmull-Rom 三次、窗函数 sinc（带抗混叠截止） |
 | 依赖 | 仅 `moonbitlang/core`，无外部包 |
-| 测试 | 110+ 个单元测试，覆盖正常路径与错误路径 |
+| 测试 | 130 个单元测试，覆盖正常路径与错误路径 |
 | CI | Linux / macOS / Windows 三平台 `check`、`test`、`fmt`、接口一致性检查 |
 
 格式支持细节与明确不支持项见 [`docs/format-support.md`](docs/format-support.md)，架构说明见 [`docs/architecture.md`](docs/architecture.md)。
+
+### 与生态中现有音频包的区别
+
+选题前在 mooncakes.io 上检索过 `audio` / `wav` / `flac` / `ogg` 等关键词，现有包大致分三类，`moonaudio` 的定位与它们都不重合：
+
+| 现有包 | 它们的定位 | `moonaudio` 的不同之处 |
+| --- | --- | --- |
+| `mizchi/audio`、`Milky2018/moon_rodio`、`moon_cpal` | 浏览器 / C 音频库的**绑定**，负责播放与设备 IO | 纯 MoonBit、零绑定，只做「字节 ↔ 采样 ↔ 分析」的纯函数处理，可离线、可在 wasm-gc 里跑 |
+| `bw448/moon-wav`、`Ridge-Lab/moonwavkit`、`Xcsa-ee/moonflac` 等 | 单一格式的最小解析器 | 四个容器 + 统一 `AudioBuffer` + 编码 + 重采样 + DSP + CLI，格式之间可以互相喂给同一条分析流水线 |
+| 各家的 DSP / FFT 小包 | 单点算法 | 与容器解码共用同一套归一化采样与错误模型，`analyse`/`spectrogram`/`Biquad` 直接吃解码结果 |
+
+也就是说，本项目不是一个格式解析器的又一个实现，而是把「读文件 → 归一化 → 分析/处理 → 再编码」这条链路做完整，并保持无依赖、可离线复现。
 
 ## 快速开始
 
