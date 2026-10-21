@@ -4,8 +4,9 @@
 
 ///|
 /// Version of the `moonaudio` module.
+/// Keep in sync with the `version` field in `moon.mod`.
 pub fn version() -> String {
-  "0.3.0"
+  "0.3.1"
 }
 
 ///|
