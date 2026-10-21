@@ -1,5 +1,5 @@
 import {
-  "Sakuraqwq1/moonaudio/src/audio" @audio,
+  "Sakuraqwq1/moonaudio/src/audio",
   "moonbitlang/core/buffer",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/math",

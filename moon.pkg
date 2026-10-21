@@ -1,7 +1,7 @@
 import {
-  "Sakuraqwq1/moonaudio/src/aiff" @aiff,
-  "Sakuraqwq1/moonaudio/src/au" @au,
-  "Sakuraqwq1/moonaudio/src/audio" @audio,
-  "Sakuraqwq1/moonaudio/src/flac" @flac,
-  "Sakuraqwq1/moonaudio/src/wav" @wav,
+  "Sakuraqwq1/moonaudio/src/aiff",
+  "Sakuraqwq1/moonaudio/src/au",
+  "Sakuraqwq1/moonaudio/src/audio",
+  "Sakuraqwq1/moonaudio/src/flac",
+  "Sakuraqwq1/moonaudio/src/wav",
 }

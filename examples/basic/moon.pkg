@@ -1,7 +1,7 @@
 import {
-  "Sakuraqwq1/moonaudio" @moonaudio,
-  "Sakuraqwq1/moonaudio/src/audio" @audio,
-  "Sakuraqwq1/moonaudio/src/wav" @wav,
+  "Sakuraqwq1/moonaudio",
+  "Sakuraqwq1/moonaudio/src/audio",
+  "Sakuraqwq1/moonaudio/src/wav",
   "moonbitlang/core/math",
 }
 

@@ -1,10 +1,10 @@
 import {
-  "Sakuraqwq1/moonaudio" @moonaudio,
-  "Sakuraqwq1/moonaudio/src/aiff" @aiff,
-  "Sakuraqwq1/moonaudio/src/audio" @audio,
-  "Sakuraqwq1/moonaudio/src/dsp" @dsp,
-  "Sakuraqwq1/moonaudio/src/resample" @resample,
-  "Sakuraqwq1/moonaudio/src/wav" @wav,
+  "Sakuraqwq1/moonaudio",
+  "Sakuraqwq1/moonaudio/src/aiff",
+  "Sakuraqwq1/moonaudio/src/audio",
+  "Sakuraqwq1/moonaudio/src/dsp",
+  "Sakuraqwq1/moonaudio/src/resample",
+  "Sakuraqwq1/moonaudio/src/wav",
 }
 
 pkgtype(kind: "executable")
