@@ -137,13 +137,48 @@ moon run cmd/main -- convert @AUDIO_B64 --rate 48000 --format s24 --container ai
 - generated: 1.000 s of 440 Hz at 44.1 kHz, peak 0.800
 - encoded: 88244 byte WAV, sniffed as wav
 - header: 44100 Hz, 1 ch, 16 bit (s16), pcm, 44100 frames
-- roundtrip: 44100 frames, peak -1.938 dBFS, rms -4.949 dBFS
+- roundtrip: 44100 frames, peak -1.938 dBFS, rms -4.949 dBFS, crest 1.414
 - AIFF 24-bit: 132354 bytes, decoded peak 0.800
 - AU float64: 352824 bytes, decoded peak 0.800
 - resampled 44.1 kHz -> 48 kHz: 48000 frames, peak 0.800
+- FFT peak: 441.431 Hz for the 440 Hz tone (10.767 Hz per bin)
+- spectrogram: 170 frames x 513 bins, bin width 43.066 Hz, frame 0 peak 430.664 Hz
+- high pass 200 Hz: peak 0.824, rms 0.554
 ```
 
 真实项目里文件读取由宿主负责（浏览器用 `File`/`fetch`，native 用 `moonbitlang/x/fs` 或自己的 FFI），库本身只接收 `Bytes`。
+
+## 示例
+
+两个示例都是可以直接 `moon run` 的独立包：
+
+```bash
+moon run examples/basic    # 20 行：生成正弦 → WAV 编码 → 门面解码 → 打印电平
+moon run examples/tour     # 分节导览：合成、分析、滤波、重采样、容器往返
+```
+
+`examples/tour` 的实际输出（节选）：
+
+```text
+== synthesis ==
+  tone 440 Hz : 22050 frames, peak 0.4
+  mixed       : peak 0.666, rms 0.354
+  deterministic: true
+
+== analysis ==
+  fft peak at bin 128: 1000 Hz (input 1000 Hz)
+  spectrogram: 31 frames x 257 bins, 15.625 Hz per bin
+  frame 0 peak: 1000 Hz
+
+== resampling ==
+  ratio 44100:48000 reduces to 147:160
+  expected frames: 4800
+  actual frames  : 4800
+
+== containers ==
+  wav: 4454 bytes — 22050 Hz, 1 ch, 16 bit (s16), pcm, 2205 frames
+  aiff: 6670 bytes — 22050 Hz, 1 ch, 24 bit (s24), AIFF NONE, 2205 frames
+```
 
 ## 包结构
 
