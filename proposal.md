@@ -47,3 +47,7 @@ MoonBit 生态缺少一个不依赖任何宿主平台、可以直接跑在 wasm 
 - 实现依据公开标准文本：RIFF/WAVE（Microsoft）、AIFF/AIFC（Apple）、Sun `.au`、FLAC 格式规范（Xiph.Org，RFC 9639）。
 - 未复制任何第三方源码；测试向量由仓库内独立实现的位流写入器生成。
 - 本项目采用 Apache License 2.0。
+
+## 当前进度
+
+上面列出的 1–5 项均已完成并合并到主分支：`moon check --deny-warn` 与 `moon test --deny-warn` 通过（130 个测试），CI 覆盖 Linux/macOS/Windows 三平台的 check、test、fmt 与接口一致性检查，`moon build --target wasm-gc` 与 `--target native` 均可构建；`moon run cmd/main -- demo` 与 `moon run examples/tour` 可直接运行。后续计划见 `README.md` 的路线图（FLAC 编码器、官方测试集交叉验证、流式 API）。
