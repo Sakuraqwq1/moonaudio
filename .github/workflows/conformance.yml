@@ -1,0 +1,48 @@
+# Informational conformance run against real FLAC files published by the FLAC
+# project (ietf-wg-cellar/flac-test-files). This job never blocks the main CI: it
+# exists to surface differences between the decoder and real-world encoders,
+# which the synthetic fixtures in src/flac cannot cover.
+name: FLAC conformance (informational)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+jobs:
+  decode-official-sample:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch the mono test file
+        run: |
+          curl -fsSL -o mono.flac \
+            "https://raw.githubusercontent.com/ietf-wg-cellar/flac-test-files/main/subset/60%20-%20mono%20audio.flac"
+          ls -l mono.flac
+
+      - name: Report metadata through the CLI
+        run: |
+          export AUDIO_B64="$(base64 -w0 mono.flac)"
+          moon run cmd/main -- info @AUDIO_B64
+
+      - name: Decode and measure
+        run: |
+          export AUDIO_B64="$(base64 -w0 mono.flac)"
+          moon run cmd/main -- stats @AUDIO_B64 | tee stats.txt
+          grep -q "frames:" stats.txt
+          echo "frames: $(grep '^frames:' stats.txt)"
+
+      - name: Transform and re-encode the decoded audio
+        run: |
+          export AUDIO_B64="$(base64 -w0 mono.flac)"
+          moon run cmd/main -- convert @AUDIO_B64 --rate 48000 --format s24 --container wav \
+            > converted.b64
+          export CONVERTED_B64="$(cat converted.b64)"
+          moon run cmd/main -- info @CONVERTED_B64

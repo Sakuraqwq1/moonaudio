@@ -27,6 +27,7 @@ jobs:
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          echo "MOONFMT_OVERRIDE=$HOME/.moon/bin/moonfmt" >> "$GITHUB_ENV"
 
       - name: Install MoonBit (windows)
         if: runner.os == 'Windows'
@@ -35,6 +36,7 @@ jobs:
           Invoke-WebRequest -Uri "https://cli.moonbitlang.com/install/powershell.ps1" -OutFile "$env:TEMP\install-moonbit.ps1"
           & "$env:TEMP\install-moonbit.ps1"
           "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "MOONFMT_OVERRIDE=$env:USERPROFILE\.moon\bin\moonfmt.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Show toolchain versions
         run: moon version --all
@@ -45,8 +47,23 @@ jobs:
       - name: Run tests
         run: moon test --deny-warn
 
+      # `moon fmt` normally downloads the formatter from mooncakes; when that
+      # fetch is unavailable the bundled `moonfmt` binary is used instead, so the
+      # formatting contract is still enforced.
       - name: Check formatting
-        run: moon fmt --check
+        shell: bash
+        run: |
+          if moon fmt --check; then
+            echo "moon fmt --check passed"
+          else
+            echo "::warning::moon fmt --check unavailable, falling back to the bundled moonfmt"
+            find . -name '*.mbt' -not -path './_build/*' -print0 | xargs -0 -n1 moonfmt -w
+            if [ -n "$(git status --porcelain -- '*.mbt')" ]; then
+              echo "::error::source files are not formatted; run 'moon fmt' and commit"
+              git --no-pager diff -- '*.mbt' | head -200
+              exit 1
+            fi
+          fi
 
       - name: Check generated interfaces are up to date
         shell: bash
@@ -70,7 +87,7 @@ jobs:
       - name: Build every package for wasm-gc
         run: moon build --target wasm-gc
       - name: Run the CLI smoke test
-        run: moon run cmd/main -- --version
+        run: moon run cmd/main -- version
 
   build-native:
     name: build (native)
@@ -83,5 +100,5 @@ jobs:
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
       - name: Build every package for the native backend
         run: moon build --target native
-      - name: Run the CLI smoke test
-        run: moon run cmd/main -- --version
+      - name: Run the demo end to end
+        run: moon run cmd/main -- demo
